@@ -8,10 +8,8 @@ run python
 upgrade pip
 	py -m pip install --upgrade pip
 install requirements
+	py -m pip install flask flask_sqlalchemy flask_bcrypt flask_login flask_wtf email_validator xmltodict
 	py -m pip install -r requirements.txt
-	py -m pip install email_validator
-	py -m pip install flask_bcrypt
-	py -m pip install flask_login
 DB aktivieren
 	python
 	from OfferGUI.models import db

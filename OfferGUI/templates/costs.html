@@ -5,6 +5,22 @@ Costs
 {% endblock %}
 
 {% block content %}
+<table class="table table-hover table-secondary">
+    <thead>
+        <tr>
+            {% for item in project_info_items %}
+            <th scope="col">Activ Project:</th>
+            <th scope="col">ID: {{ item.project_id }}</th>
+            <th scope="col">Name: {{ item.project_name }}</th>
+            <th scope="col">Calculation for: {{ item.calc_for }}</th>
+            <th scope="col">Editor: {{ item.editor }}</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table>
 <form method="POST" class="form-register" style="color:white">
     <div class="row" style="margin-top:20px; margin-left:20px">
         <div class="col-11">
@@ -12,12 +28,13 @@ Costs
                 <h3>Staff costs</h3>
                 <button type="submit" name="StaffCostPlusBtn" value="StaffCostPlusBtn"
                     class="btn btn-outline btn-success">+</button>
-                <button type="submit" name="StaffCostMinusBtn" value="StaffCostMinusBtn"
+                <button type="input" name="StaffCostMinusBtn" value="StaffCostMinusBtn"
                     class="btn btn-outline btn-danger">-</button>
+                    <!-- (Selectfield ID) -->
                 <thead>
                     <tr>
                         <th scope="col" style="width:50px">ID</th>
-                        <th scope="col" style="width:500px">Service</th>
+                        <th scope="col" style="width:300px">Service</th>
                         <th scope="col" style="width:100px">Unit price</th>
                         <th scope="col" style="width:200px">Rental mode</th>
                         <th scope="col" style="width:200px">Rental units</th>
@@ -27,18 +44,24 @@ Costs
                 </thead>
                 <tbody>
                     <td>
-                        {% for item in staff_items %}
-                        <tr>
-                            <td>{{ item.id }}</td>
-                            <td>{{ staff_form.service(class="form-control") }}</td>
-                            <td>unit price --> todo</td>
-                            <td>{{ staff_form.rentalmode(class="form-control") }}</td>
-                            <!-- <td><input type="range" class="form-range" min="0" max="5" id="customRange2"></td> -->
-                            <td>{{ staff_form.rentalunits(class="form-control") }}</td>
-                            <td>{{ staff_form.remark(class="form-control") }}</td>
-                            <td>sum --> todo</td>
-                        </tr>
-                        {% endfor %}
+                    <td>{{ staff_form.service(class="form-control") }}</td>
+                    <td></td>
+                    <td>{{ staff_form.rentalmode(class="form-control") }}</td>
+                    <td>{{ staff_form.rentalunits(class="form-control", value="0") }}</td>
+                    <td>{{ staff_form.remark(class="form-control") }}</td>
+                    <td></td>
+                    {% for item in staff_items %}
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.Service }}</td>
+                        <td>{{ item.UnitPrice }} €</td>
+                        <td>{{ item.RentalMode }}</td>
+                        <!-- <td><input type="range" class="form-range" min="0" max="5" id="customRange2"></td> -->
+                        <td>{{ item.RentalUnits }}</td>
+                        <td>{{ item.Remark }}</td>
+                        <td>{{ item.Sum }} €</td>
+                    </tr>
+                    {% endfor %}
                     </td>
             </table>
             <br /><br />
@@ -53,7 +76,7 @@ Costs
                 <thead>
                     <tr>
                         <th scope="col" style="width:50px">ID</th>
-                        <th scope="col" style="width:500px">Service</th>
+                        <th scope="col" style="width:300px">Service</th>
                         <th scope="col" style="width:100px">Unit price</th>
                         <th scope="col" style="width:200px">Rental mode</th>
                         <th scope="col" style="width:200px">Rental units</th>
@@ -64,7 +87,7 @@ Costs
                 <tbody>
 
                     <td>
-                        {% for item in tool_items %}    
+                        {% for item in tool_items %}
                         <tr>
                             <td>{{ item.id }}</td>
                             <td style="width:500px">{{ install_form.service(class="form-control") }}</td>
@@ -75,7 +98,7 @@ Costs
                             <td>{{ install_form.remark(class="form-control") }}</td>
                             <td>sum --> todo</td>
                         </tr>
-                    {% endfor %}
+                        {% endfor %}
                     </td>
             </table>
             <br /><br />

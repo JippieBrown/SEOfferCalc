@@ -112,14 +112,14 @@ class SaveForm(FlaskForm):
     # project_name = StringField(label='Project name')
     # project_id = StringField(label='Project ID', validators=[DataRequired()])
 
-    submit = SubmitField(label='Save project!')
+    submit = SubmitField(label='Save project info and start cost calculation')
 
 class StaffCostForm(FlaskForm):
 
     service = SelectField(u'Service', coerce=str)
-    unitprice = IntegerField(label='Unit price')
+    # unitprice = IntegerField(label='Unit price')
     rentalmode = SelectField(u'Rental mode', coerce=str)
-    rentalunits = IntegerField(label='Rental units')
+    rentalunits = IntegerField(label='Rental units', validators=[DataRequired()] )
     remark = StringField(label='Remark')
 
 class InstallationToolsCostForm(FlaskForm):

@@ -6,10 +6,15 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 import xmltodict
-# from flask_table import Table, Col
 
-def addRow(table):
-    item_to_create = table()
+def addRow(table, items, unitprice, sum_item):
+
+    item_to_create = table(Service=items[1],
+                           RentalMode=items[2],
+                           RentalUnits=items[3],
+                           Remark=items[4],
+                           UnitPrice=unitprice,
+                           Sum=sum_item)
     db.session.add(item_to_create)
     db.session.commit()
 
@@ -23,8 +28,9 @@ def delRow(table):
         flash(f"Table empty!", category='warning')
 
 @app.route('/costs', methods=['POST', 'GET'])
-@login_required
+# @login_required
 def costs_page():
+    # project_info = 
     staff_form = StaffCostForm()
     install_form = InstallationToolsCostForm()
     sc = temp_staff_costs
@@ -32,7 +38,7 @@ def costs_page():
     stat_c_it = static_costs_installation_tools
     # class from from models-py
     dde = dropdown_elements
-    #reading from database
+    #reading dropdown choices from database
     db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
                                                    stat_c_s.service).filter(
                                                    stat_c_s.service!="NULL")
@@ -42,18 +48,50 @@ def costs_page():
     db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
                                                            stat_c_it.service).filter(
                                                            stat_c_it.service!="NULL")  
-    
+
+    #reading table data from database
+    staff_items = temp_staff_costs.query.all()
+    tool_items = temp_tool_costs.query.all()
+    project_info_items = temp_project_info.query.all()
+
+    #select items by column name
+    temp_calc_for = [k.calc_for for k in project_info_items]
+    # print(temp_calc_for)
+
     #setting choices
     staff_form.service.choices = [k for k in db_static_staff]
     staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
     install_form.service.choices = [k for k in db_static_installation]
-    staff_items = temp_staff_costs.query.all()
-    tool_items = temp_tool_costs.query.all()
 
+
+
+    # if temp_calc_for == ['RC']:
+    #     print(temp_calc_for)
 
     if request.method == 'POST':
         if request.form.get('StaffCostPlusBtn'):
-            addRow(temp_staff_costs)
+            staff_cost_output = [request.form[key] for key in request.form.keys()]
+            # print(staff_cost_output[2])
+            staff_form.service.data = staff_cost_output[1]
+            staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
+            if temp_calc_for == ['RC']:
+                staff_price_item = staff_price_row.price_reg_inquiry_RC
+                # print(staff_price_item)
+            elif temp_calc_for == ['PRO GIS']:
+                staff_price_item = staff_price_row.price_reg_inquiry_OE
+                # print(staff_price_item)
+            elif temp_calc_for == ['DE TM']:
+                staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
+            print(int(staff_price_item)*int(staff_cost_output[3]))                                
+            sum_staff_item = int(staff_price_item)*int(staff_cost_output[3])
+            staff_form.rentalmode.data = staff_cost_output[2]
+            staff_form.rentalunits.data = staff_cost_output[3]
+            staff_form.remark.data = staff_cost_output[4]
+            if int(staff_form.rentalunits.data) > 0:
+                addRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
+            else:
+                flash(f"Rental unit must be greater than zero", category='danger')
+
         elif request.form.get('StaffCostMinusBtn'):     
             delRow(temp_staff_costs)
         elif request.form.get('ToolCostPlusBtn'):
@@ -62,7 +100,11 @@ def costs_page():
             delRow(temp_tool_costs)        
         return redirect(url_for('costs_page'))
     
-    return render_template('costs.html', staff_form=staff_form, install_form=install_form, staff_items=staff_items, tool_items=tool_items)
+    return render_template('costs.html', staff_form=staff_form, 
+                                         install_form=install_form, 
+                                         staff_items=staff_items, 
+                                         tool_items=tool_items,
+                                         project_info_items=project_info_items)
 
 @app.route('/register', methods=['POST', 'GET'])
 def register_page():
@@ -188,7 +230,12 @@ def project_page():
                                     plant_type=project_output[12],
                                     busbar=project_output[13],
                                     number_of_bays=project_output[14])
+        temp_project_infos = temp_project_info(project_name=project_output[2],
+                                               calc_for=project_output[7],
+                                               editor=project_output[10],
+                                               project_id=project_output[11],)
         db.session.add(project_infos)
+        db.session.add(temp_project_infos)
         db.session.commit()
         flash(f"Data from project page stored in database!", category='success')
         # project_output = [[request.form[key] for key in request.form.keys() if key == i] for i in project_info_col]
@@ -201,45 +248,8 @@ def project_page():
         # for i,j in zip(project_info_col, project_output):
         #     project_infos = project_info.__dict__.keys
 
-        return redirect(url_for('home_page'))
+        return redirect(url_for('costs_page'))
     if save_form.errors != {}: #If there are not errors from the validations
         for err_msg in form.errors.values():
             flash(f'There was an error with creating a user: {err_msg}', category='danger')
     return render_template('project_info.html', form=form, save_form=save_form)
-
-
-
-# @app.route('/uploader', methods=['GET', 'POST'])
-# def upload_files():
-#     # item = []#request.args.get('item', None)
-#     if request.method == 'POST':
-#         f = request.files['file']
-#         print(f.filename)
-#         # f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
-#         # filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
-#         print('file uploaded')
-#         print(filepath)
-#         with open(filepath) as fd:
-#             doc = xmltodict.parse(fd.read())
-#         item = doc['form1']
-#         os.remove(filepath)
-#         print('file removed')
-    # return 'Success'#redirect(url_for('home_page'))#, item=item))
-    # return render_template('home.html', item=item)
-
-# @app.route('/uploader', methods = ['GET', 'POST'])
-# def upload_file():
-#     print('file?')
-#     if request.method == 'POST':
-#         f = request.files['file']
-#         f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
-#         filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
-#         print('file uploaded')
-#         print(filepath)
-#         with open(filepath) as fd:
-#             doc = xmltodict.parse(fd.read())
-#         item = doc['form1']
-#         os.remove(filepath)
-#         print('file removed')
-#     return redirect(url_for('home_page', item=item))
-        # return render_template('home.html', item=item)

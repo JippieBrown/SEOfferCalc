@@ -36,6 +36,9 @@ class static_costs_site_equipment(db.Model):
 class static_costs_staff(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     service = db.Column(db.String())
+    price_reg_inquiry_RC = db.Column(db.String())
+    price_reg_inquiry_OE = db.Column(db.String())
+    price_reg_inquiry_RC_DE = db.Column(db.String())
 
 class static_costs_testing_tools(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -44,6 +47,13 @@ class static_costs_testing_tools(db.Model):
 class static_costs_travel_accommodation(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     service = db.Column(db.String())
+
+class temp_project_info(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    editor = db.Column(db.String())
+    project_id = db.Column(db.String())
+    project_name = db.Column(db.String())
+    calc_for = db.Column(db.String())
 
 class temp_staff_costs(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
