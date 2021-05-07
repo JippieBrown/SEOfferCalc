@@ -10,16 +10,16 @@ import xmltodict
 def addRow(table, items, unitprice, sum_item):
 
     item_to_create = table(Service=items[1],
-                           RentalMode=items[2],
-                           RentalUnits=items[3],
+                           RentalMode=items[3],
+                           RentalUnits=items[2],
                            Remark=items[4],
                            UnitPrice=unitprice,
                            Sum=sum_item)
     db.session.add(item_to_create)
     db.session.commit()
 
-def delRow(table):
-    last_id = len(table.query.all())
+def delRow(table, id_row):
+    last_id = id_row#len(table.query.all())
     last_row = table.query.get(last_id)
     if last_id >= 1:
         db.session.delete(last_row)
@@ -56,7 +56,9 @@ def costs_page():
 
     #select items by column name
     temp_calc_for = [k.calc_for for k in project_info_items]
+    temp_sum_total = sum([k.Sum for k in staff_items])
     # print(temp_calc_for)
+    # print(temp_sum)
 
     #setting choices
     staff_form.service.choices = [k for k in db_static_staff]
@@ -71,7 +73,7 @@ def costs_page():
     if request.method == 'POST':
         if request.form.get('StaffCostPlusBtn'):
             staff_cost_output = [request.form[key] for key in request.form.keys()]
-            # print(staff_cost_output[2])
+            # print(staff_cost_output)
             staff_form.service.data = staff_cost_output[1]
             staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
             if temp_calc_for == ['RC']:
@@ -82,18 +84,19 @@ def costs_page():
                 # print(staff_price_item)
             elif temp_calc_for == ['DE TM']:
                 staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
-            print(int(staff_price_item)*int(staff_cost_output[3]))                                
-            sum_staff_item = int(staff_price_item)*int(staff_cost_output[3])
-            staff_form.rentalmode.data = staff_cost_output[2]
-            staff_form.rentalunits.data = staff_cost_output[3]
+            # print(int(staff_price_item)*int(staff_cost_output[2]))                                
+            sum_staff_item = int(staff_price_item)*int(staff_cost_output[2])
+            staff_form.rentalmode.data = staff_cost_output[3]
+            staff_form.rentalunits.data = staff_cost_output[2]
             staff_form.remark.data = staff_cost_output[4]
             if int(staff_form.rentalunits.data) > 0:
                 addRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
             else:
                 flash(f"Rental unit must be greater than zero", category='danger')
 
-        elif request.form.get('StaffCostMinusBtn'):     
-            delRow(temp_staff_costs)
+        elif request.form.get('StaffCostMinusBtn'): 
+            # print(request.form.get('StaffCostMinusBtn'))    
+            delRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
         elif request.form.get('ToolCostPlusBtn'):
             addRow(temp_tool_costs)
         elif request.form.get('ToolCostMinusBtn'):
@@ -104,7 +107,8 @@ def costs_page():
                                          install_form=install_form, 
                                          staff_items=staff_items, 
                                          tool_items=tool_items,
-                                         project_info_items=project_info_items)
+                                         project_info_items=project_info_items,
+                                         temp_sum_total=temp_sum_total)
 
 @app.route('/register', methods=['POST', 'GET'])
 def register_page():
@@ -234,6 +238,7 @@ def project_page():
                                                calc_for=project_output[7],
                                                editor=project_output[10],
                                                project_id=project_output[11],)
+        temp_project_info.query.delete()                                               
         db.session.add(project_infos)
         db.session.add(temp_project_infos)
         db.session.commit()
