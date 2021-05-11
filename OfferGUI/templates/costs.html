@@ -5,7 +5,7 @@ Costs
 {% endblock %}
 
 {% block content %}
-<table class="table table-hover table-secondary">
+<table class="table table-hover table-dark">
     <thead>
         <tr>
             {% for item in project_info_items %}
@@ -14,9 +14,9 @@ Costs
             <th scope="col">Name: {{ item.project_name }}</th>
             <th scope="col">Calculation for: {{ item.calc_for }}</th>
             <th scope="col">Editor: {{ item.editor }}</th>
+            <!-- <th scope="col"></th>
             <th scope="col"></th>
-            <th scope="col"></th>
-            <th scope="col"></th>
+            <th scope="col"></th> -->
             {% endfor %}
         </tr>
     </thead>
@@ -26,17 +26,6 @@ Costs
         <div class="col-11">
             <table class="table table-hover table-dark">
                 <h3>Staff costs</h3>
-                <thead>
-                    <td><button type="submit" name="StaffCostPlusBtn" value="StaffCostPlusBtn"
-                            class="btn btn-outline-success">+</button></td>
-                    <td>{{ staff_form.service(class="form-control") }}</td>
-                    <td>{{ staff_form.rentalunits(class="form-control", value="0") }}</td>
-                    <td>{{ staff_form.rentalmode(class="form-control") }}</td>
-                    <td>{{ staff_form.remark(class="form-control", placeholder="Remark") }}</td>
-                    <th class="text-right"></th>
-                    <th class="text-right" style="text-decoration:double underline;">{{ temp_sum_total }} €</th>
-                </thead>
-                <!-- (Selectfield ID) -->
                 <thead>
                     <tr>
                         <th scope="col" class="text-center" style="width:50px">ID</th>
@@ -49,6 +38,17 @@ Costs
                         <th scope="col" class="text-center" style="width:50px"></th>
                     </tr>
                 </thead>
+                <thead>
+                    <th><button type="submit" name="StaffCostPlusBtn" value="StaffCostPlusBtn"
+                            class="btn btn-outline-success">+</button></th>
+                    <th>{{ staff_form.service(class="form-control") }}</th>
+                    <th>{{ staff_form.rentalunits(class="form-control", value="0") }}</th>
+                    <th>{{ staff_form.rentalmode(class="form-control") }}</th>
+                    <th>{{ staff_form.remark(class="form-control", placeholder="Enter text...") }}</th>
+                    <th class="text-right"></th>
+                    <th class="text-right" style="text-decoration:double underline;">{{ temp_sum_total }} €</th>
+                    <th></th>
+                </thead>
                 <tbody>
                     {% for item in staff_items %}
                     <tr>
@@ -57,61 +57,57 @@ Costs
                         <td class="text-right">{{ item.RentalUnits }}</td>
                         <td>{{ item.RentalMode }}</td>
                         <!-- <td><input type="range" class="form-range" min="0" max="5" id="customRange2"></td> -->
-
                         <td class="text-center">{{ item.Remark }}</td>
                         <td class="text-center">{{ item.UnitPrice }} €</td>
                         <td class="text-center">{{ item.Sum }} €</td>
                         <td><button type="input" name="StaffCostMinusBtn" value="{{ item.id }}"
-                            class="center btn btn-outline-danger">-</button></td>
+                                class="center btn btn-outline-danger">-</button></td>
                     </tr>
                     {% endfor %}
-                    
+                </tbody>
             </table>
-            <div class="row" style="margin-left:20px; margin-right:-20px">
-            <div class="col-10"><table class="table table-hover table-dark"></table></div>
-            <div class="col-1"><table class="table table-hover table-dark">
-                <td>Test</td>
-            </table>
-            <!-- <div class="col-1"><table class="table table-hover table-dark"></table></div> -->
-        </div>
-        </div>
-
             <br /><br />
             <table class="table table-hover table-dark">
-                <h3>Tools costs</h3>
-                <form action='/'>
-                    <button type="submit" name="ToolCostPlusBtn" value="ToolCostPlusBtn"
-                        class="btn btn-outline btn-success">+</button>
-                    <button type="submit" name="ToolCostMinusBtn" value="ToolCostMinusBtn"
-                        class="btn btn-outline btn-danger">-</button>
-                </form>
+                <h3>(Installation costs --todo--)</h3>
                 <thead>
                     <tr>
-                        <th scope="col" style="width:50px">ID</th>
-                        <th scope="col" style="width:300px">Service</th>
-                        <th scope="col" style="width:100px">Unit price</th>
-                        <th scope="col" style="width:200px">Rental mode</th>
-                        <th scope="col" style="width:200px">Rental units</th>
-                        <th scope="col">Remark</th>
-                        <th scope="col" style="width:100px">Sum</th>
+                        <th scope="col" class="text-center" style="width:50px">ID</th>
+                        <th scope="col" class="text-center" style="width:500px">Service</th>
+                        <th scope="col" class="text-right" style="width:200px">Rental units</th>
+                        <th scope="col" class="text-left" style="width:200px">Rental mode</th>
+                        <th scope="col" class="text-center">Remark</th>
+                        <th scope="col" class="text-center" style="width:100px">Unit price</th>
+                        <th scope="col" class="text-center" style="width:100px">Sum</th>
+                        <th scope="col" class="text-center" style="width:50px"></th>
                     </tr>
                 </thead>
+                <thead>
+                    <th><button type="submit" name="InstallCostPlusBtn" value="InstallCostPlusBtn"
+                            class="btn btn-outline-success">+</button></th>
+                    <th>{{ install_form.service(class="form-control") }}</th>
+                    <th>{{ install_form.rentalunits(class="form-control", value="0") }}</th>
+                    <th>{{ install_form.rentalmode(class="form-control") }}</th>
+                    <th>{{ install_form.remark(class="form-control", placeholder="Enter text...") }}</th>
+                    <th class="text-right"></th>
+                    <th class="text-right" style="text-decoration:double underline;">{{ temp_sum_total }} €</th>
+                    <th></th>
+                </thead>
                 <tbody>
-
-                    <td>
-                        {% for item in tool_items %}
-                        <tr>
-                            <td>{{ item.id }}</td>
-                            <td style="width:500px">{{ install_form.service(class="form-control") }}</td>
-                            <td>unit price --> todo</td>
-                            <td>{{ install_form.rentalmode(class="form-control") }}</td>
-                            <!-- <td><input type="range" class="form-range" min="0" max="5" id="customRange2"></td> -->
-                            <td>{{ install_form.rentalunits(class="form-control") }}</td>
-                            <td>{{ install_form.remark(class="form-control") }}</td>
-                            <td>sum --> todo</td>
-                        </tr>
-                        {% endfor %}
-                    </td>
+                    {% for item in install_items %}
+                    <tr>
+                        <td class="text-center">{{ item.id }}</td>
+                        <td class="text-center">{{ item.Service }}</td>
+                        <td class="text-right">{{ item.RentalUnits }}</td>
+                        <td>{{ item.RentalMode }}</td>
+                        <!-- <td><input type="range" class="form-range" min="0" max="5" id="customRange2"></td> -->
+                        <td class="text-center">{{ item.Remark }}</td>
+                        <td class="text-center">{{ item.UnitPrice }} €</td>
+                        <td class="text-center">{{ item.Sum }} €</td>
+                        <td><button type="input" name="InstallCostMinusBtn" value="{{ item.id }}"
+                                class="center btn btn-outline-danger">-</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
             <br /><br />
             <table class="table table-hover table-dark">

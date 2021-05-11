@@ -48,12 +48,62 @@ class static_costs_travel_accommodation(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     service = db.Column(db.String())
 
+class temp_inquiry(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    firstname = db.Column(db.String())
+    lastname = db.Column(db.String())
+    department = db.Column(db.String())
+    project_name = db.Column(db.String())
+    country = db.Column(db.String())
+    city = db.Column(db.String())
+    inquiry_date = db.Column(db.String())
+    plant_type = db.Column(db.String())    
+    validity = db.Column(db.String())
+    protection_class_indoor = db.Column(db.String())
+    protection_class_outdoor = db.Column(db.String())
+    calc_for = db.Column(db.String())
+    busbar = db.Column(db.String())
+    number_of_bays = db.Column(db.String())
+    supervision = db.Column(db.String())
+    commissioning = db.Column(db.String())
+    mpd = db.Column(db.String())
+    language = db.Column(db.String())
+    tools = db.Column(db.String())
+    hv_test = db.Column(db.String())
+    transport = db.Column(db.String())
+    sec_works = db.Column(db.String())
+    sec_works_no_of_bays = db.Column(db.String())
+    earthing = db.Column(db.String())
+    pd_measurement = db.Column(db.String())
+    psd = db.Column(db.String())
+    actas = db.Column(db.String())
+    libo = db.Column(db.String())
+    customer_training = db.Column(db.String())
+    indoor_crane = db.Column(db.String())
+    dc_supply = db.Column(db.String())
+    hv_plugs = db.Column(db.String())
+    hv_plug_size = db.Column(db.String())
+    remark = db.Column(db.String())
+    offer_until = db.Column(db.String())
+    kick_off_meeting = db.Column(db.String())
+
 class temp_project_info(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
+    project_name = db.Column(db.String())
+    project_manager_dept = db.Column(db.String())
+    order_indicator = db.Column(db.String())
+    site = db.Column(db.String())
+    customer = db.Column(db.String())
+    ## further info
+    calc_for = db.Column(db.String())
+    date = db.Column(db.String())
+    cost_determination = db.Column(db.String())
     editor = db.Column(db.String())
     project_id = db.Column(db.String())
-    project_name = db.Column(db.String())
-    calc_for = db.Column(db.String())
+    ## plant info
+    plant_type = db.Column(db.String())
+    busbar = db.Column(db.String())
+    number_of_bays = db.Column(db.Integer())
 
 class temp_staff_costs(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -89,7 +139,7 @@ class dropdown_elements(db.Model):
     # def __repr__(self):
     #     return f'dropdown_elements {self.name}'
 
-class project_info(db.Model):
+class collected_projects(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     project_name = db.Column(db.String(), unique=True)
     project_manager_dept = db.Column(db.String())

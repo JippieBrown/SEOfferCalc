@@ -4,32 +4,16 @@ from OfferGUI.forms import *
 from flask import render_template, redirect, request, url_for, flash, get_flashed_messages
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
+from datetime import datetime
+from OfferGUI.tools import AddRow, DelRow, XmlReader, RemoveTemporaryItems
 import os
 import xmltodict
-
-def addRow(table, items, unitprice, sum_item):
-
-    item_to_create = table(Service=items[1],
-                           RentalMode=items[3],
-                           RentalUnits=items[2],
-                           Remark=items[4],
-                           UnitPrice=unitprice,
-                           Sum=sum_item)
-    db.session.add(item_to_create)
-    db.session.commit()
-
-def delRow(table, id_row):
-    last_id = id_row#len(table.query.all())
-    last_row = table.query.get(last_id)
-    if last_id >= 1:
-        db.session.delete(last_row)
-        db.session.commit()
-    else:
-        flash(f"Table empty!", category='warning')
-
 @app.route('/costs', methods=['POST', 'GET'])
 # @login_required
 def costs_page():
+    # if len(temp_project_info.query.all()) == 0:
+    #     flash(f"No project selected!", category='info')
+    #     return redirect(url_for('home_page'))  
     # project_info = 
     staff_form = StaffCostForm()
     install_form = InstallationToolsCostForm()
@@ -90,17 +74,17 @@ def costs_page():
             staff_form.rentalunits.data = staff_cost_output[2]
             staff_form.remark.data = staff_cost_output[4]
             if int(staff_form.rentalunits.data) > 0:
-                addRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
+                AddRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
             else:
                 flash(f"Rental unit must be greater than zero", category='danger')
 
         elif request.form.get('StaffCostMinusBtn'): 
             # print(request.form.get('StaffCostMinusBtn'))    
-            delRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
+            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
         elif request.form.get('ToolCostPlusBtn'):
-            addRow(temp_tool_costs)
+            AddRow(temp_tool_costs)
         elif request.form.get('ToolCostMinusBtn'):
-            delRow(temp_tool_costs)        
+            DelRow(temp_tool_costs)        
         return redirect(url_for('costs_page'))
     
     return render_template('costs.html', staff_form=staff_form, 
@@ -150,32 +134,99 @@ def logout_page():
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
+# @login_required
 def home_page():
-    return render_template('home.html')
+    save_form = SaveForm()
+    home_form = HomeForm()
+    form = ProjectForm()
+    db_projects = collected_projects.query.with_entities(collected_projects.project_name, collected_projects.project_name).filter(collected_projects.project_name!="NULL")
+    home_form.project.choices = [k for k in db_projects]
+    if request.method == 'POST':
+        if request.form.get('LoadExistingProject'):
+            RemoveTemporaryItems()
+            req_project_name = [request.form[key] for key in request.form.keys()][1]
+            print(req_project_name)
+            project_row = collected_projects.query.filter_by(project_name=req_project_name).first()
+            print(project_row.id)
+            ### class from from models-py
+            dde = dropdown_elements
+            ### reading from database
+            db_user = User.query.with_entities(User.username, User.username).all()
+            db_plant_type = dde.query.with_entities(dde.plant_type, dde.plant_type).filter(dde.plant_type!="NULL")
+            db_busbar = dde.query.with_entities(dde.busbar, dde.busbar).filter(dde.busbar!="NULL")
+            db_calc_for = dde.query.with_entities(dde.calc_for, dde.calc_for).filter(dde.calc_for!="NULL")
+            db_yes_no = dde.query.with_entities(dde.yes_no, dde.yes_no).filter(dde.yes_no!="NULL")
+            db_languages = dde.query.with_entities(dde.languages, dde.languages).filter(dde.languages!="NULL")
+            db_temp_inquiry = temp_inquiry.query.all()
+            ### setting choices (forms.py --> class ProjectForm)
+            form.calc_for.choices = [k for k in db_calc_for]
+            form.editor.choices = [k for k in db_user]
+            form.plant_type.choices = [k for k in db_plant_type]
+            form.busbar.choices = [k for k in db_busbar]
+            form.commissioning.choices = [k for k in db_yes_no]
+            form.site_management.choices = [k for k in db_yes_no]
+            form.manpower.choices = [k for k in db_yes_no]
+            form.manpower_language.choices = [k for k in db_languages]
+            form.tools.choices = [k for k in db_yes_no]
+            ### get temp inquiry info from database
+            item = project_row
+
+            ### set data on project info page
+            form.editor.data                = item.editor
+            form.project_name.data          = item.project_name
+            form.project_manager_dept.data  = item.project_manager_dept
+            form.site.data                  = item.site
+            form.calc_for.data              = item.calc_for
+            form.number_of_bays.data        = item.number_of_bays
+            form.plant_type.data            = item.plant_type
+            form.busbar.data                = item.busbar
+            form.date.data                  = datetime.strptime(item.date, '%Y-%m-%d')
+            form.cost_determination.data    = datetime.strptime(item.cost_determination, '%Y-%m-%d')
+            # form.commissioning.data         = item.commissioning
+            # form.manpower.data              = item.manpower
+            # form.manpower_language.data     = item.manpower_language
+            # form.tools.data                 = item.tools
+            ### writing in database
+            temp_project_infos = temp_project_info(project_name         = item.project_name        ,
+                                                   project_manager_dept = item.project_manager_dept,
+                                                   order_indicator      = item.order_indicator     ,
+                                                   site                 = item.site                ,
+                                                   customer             = item.customer            ,
+                                                   calc_for             = item.calc_for            ,
+                                                   date                 = item.date                ,
+                                                   cost_determination   = item.cost_determination  ,
+                                                   editor               = item.editor              ,
+                                                   project_id           = item.project_id          ,
+                                                   plant_type           = item.plant_type          ,
+                                                   busbar               = item.busbar              ,
+                                                   number_of_bays       = item.number_of_bays      )
+            db.session.add(temp_project_infos)
+            db.session.commit()
+            return render_template('project_info.html', form=form, save_form=save_form)
+    return render_template('home.html', home_form=home_form)
 
 @app.route('/uploader', methods = ['POST'])
 def upload_file():
     if request.method == 'POST':
         f = request.files['file']
-        f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
-        filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
-        # print('file uploaded')
-        return redirect(url_for('project_page', filepath=filepath))
+        print(f.filename)
+        if f.filename != "":
+            f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
+            filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
+            #call function
+            XmlReader(filepath)
+            return redirect(url_for('project_page'))
+        else:
+            flash(f"Please select file!", category='warning')
+            return redirect(url_for('home_page'))
 
 @app.route('/project', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def project_page():
     save_form = SaveForm()
     form = ProjectForm()
     if request.method == 'GET':
         # class from from models-py
-        dde = dropdown_elements
-        # getting filepath from upload_file()
-        filepath = request.args.get('filepath')
-        # open xml-file in folder uploads
-        with open(filepath) as fd:
-            doc = xmltodict.parse(fd.read())
-        # class from from models.py
         dde = dropdown_elements
         # reading from database
         db_user = User.query.with_entities(User.username, User.username).all()
@@ -184,9 +235,7 @@ def project_page():
         db_calc_for = dde.query.with_entities(dde.calc_for, dde.calc_for).filter(dde.calc_for!="NULL")
         db_yes_no = dde.query.with_entities(dde.yes_no, dde.yes_no).filter(dde.yes_no!="NULL")
         db_languages = dde.query.with_entities(dde.languages, dde.languages).filter(dde.languages!="NULL")
-        # os.remove(filepath)
-        # print('file removed')
-
+        db_temp_inquiry = temp_inquiry.query.all()
         # setting choices (forms.py --> class ProjectForm)
         form.calc_for.choices = [k for k in db_calc_for]
         form.editor.choices = [k for k in db_user]
@@ -197,52 +246,86 @@ def project_page():
         form.manpower.choices = [k for k in db_yes_no]
         form.manpower_language.choices = [k for k in db_languages]
         form.tools.choices = [k for k in db_yes_no]
-        # setting data by imported xml-file (forms.py --> class ProjectForm)
-        item = doc['form1']
-        form.project_name.data = item['ProjektName']
-        form.project_manager_dept.data = item['Vorname'] + " " + item['Nachname'] + " / " + item['Abteilung']
-        form.site.data = item['TextField5'] + ", " + item['Projektland']
-        form.calc_for.data = item['Angebot']
-        form.number_of_bays.data = item['Anzahl']
-        form.plant_type.data = item['Anlagentyp']
-        form.editor.data = current_user.username
-        form.busbar.data = item['SaS']
-        form.site_management.data = item['Block1']['Bauleiter']
-        form.commissioning.data = item['Block1']['IBSler']
-        form.manpower.data = item['Block1']['MPD_2']
-        form.manpower_language.data = item['Block1']['DropDownlist11']
-        form.tools.data = item['Block2']['Werkzeug_2']
 
+        if len(temp_project_info.query.all()) == 1:
+            item = temp_project_info.query.get(1)
+            #set data on project info page
+            form.editor.data                = item.editor
+            form.project_name.data          = item.project_name
+            form.project_manager_dept.data  = item.project_manager_dept
+            form.site.data                  = item.site
+            form.calc_for.data              = item.calc_for
+            form.number_of_bays.data        = item.number_of_bays
+            form.plant_type.data            = item.plant_type
+            form.busbar.data                = item.busbar
+            form.date.data                  = datetime.strptime(item.date, '%Y-%m-%d')
+            form.cost_determination.data    = datetime.strptime(item.cost_determination, '%Y-%m-%d')
+            # form.commissioning.data         = item.commissioning
+            # form.manpower.data              = item.manpower
+            # form.manpower_language.data     = item.manpower_language
+            # form.tools.data                 = item.tools      
+              
+        # setting data by imported xml-file (forms.py --> class ProjectForm)
+        if len(temp_inquiry.query.all()) == 1:
+            #get temp inquiry info from database
+            item = temp_inquiry.query.get(1)
+            #set data on project info page
+            form.editor.data                = current_user.username
+            form.project_name.data          = item.project_name
+            form.project_manager_dept.data  = item.firstname + " " + item.lastname + " / " + item.department
+            form.site.data                  = item.city + ", " + item.country
+            form.calc_for.data              = item.calc_for
+            form.number_of_bays.data        = item.number_of_bays
+            form.plant_type.data            = item.plant_type
+            form.busbar.data                = item.busbar
+            form.date.data                  = datetime.today()
+            form.cost_determination.data    = datetime.strptime(item.offer_until, '%Y-%m-%d')
+            form.commissioning.data         = item.commissioning
+            form.manpower.data              = item.mpd
+            form.manpower_language.data     = item.language
+            form.tools.data                 = item.tools
+        elif len(temp_inquiry.query.all()) == 0 and len(temp_project_info.query.all()) == 0:
+            flash(f"No project selected!", category='info')
+            return redirect(url_for('home_page'))            
+        elif len(temp_inquiry.query.all()) >= 2:
+            RemoveTemporaryItems()
+            flash(f"Database table 'temp_inquiry' emptied, try again!", category='info')
+            return redirect(url_for('home_page'))
         return render_template('project_info.html', form=form, save_form=save_form)
-    # if request.method == 'POST':
+
     if save_form.validate_on_submit():
         # project_info_col = [attr for attr in dir(project_info) 
         #                             if not attr.startswith("_") 
         #                             and attr not in ['Save project!','metadata','query','query_class']]
         project_output = [request.form[key] for key in request.form.keys()]
-        print(project_output)
-        project_infos = project_info(project_name=project_output[2],
-                                    project_manager_dept=project_output[3],
-                                    order_indicator=project_output[4],
-                                    site=project_output[5],
-                                    customer=project_output[6],
-                                    calc_for=project_output[7],
-                                    date=project_output[8],
-                                    cost_determination=project_output[9],
-                                    editor=project_output[10],
-                                    project_id=project_output[11],
-                                    plant_type=project_output[12],
-                                    busbar=project_output[13],
-                                    number_of_bays=project_output[14])
+        # print(project_output)
+
+        # writing in database
+        project_infos = collected_projects(project_name         = project_output[2],
+                                           project_manager_dept = project_output[3],
+                                           order_indicator      = project_output[4],
+                                           site                 = project_output[5],
+                                           customer             = project_output[6],
+                                           calc_for             = project_output[7],
+                                           date                 = project_output[8],
+                                           cost_determination   = project_output[9],
+                                           editor               = project_output[10],
+                                           project_id           = project_output[11],
+                                           plant_type           = project_output[12],
+                                           busbar               = project_output[13],
+                                           number_of_bays       = project_output[14])
+        #temp data needed for cost page
         temp_project_infos = temp_project_info(project_name=project_output[2],
                                                calc_for=project_output[7],
                                                editor=project_output[10],
                                                project_id=project_output[11],)
-        temp_project_info.query.delete()                                               
+        temp_project_info.query.delete()
         db.session.add(project_infos)
         db.session.add(temp_project_infos)
         db.session.commit()
         flash(f"Data from project page stored in database!", category='success')
+
+
         # project_output = [[request.form[key] for key in request.form.keys() if key == i] for i in project_info_col]
         # print(project_output)
 

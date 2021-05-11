@@ -1,5 +1,7 @@
 Install virtual env 
 	& C:/Users/hauke/AppData/Local/Programs/Python/Python39/python.exe -m venv c:/Users/hauke/Documents/OfferCalc/venv
+git clone
+	
 run virtualenv
 	PS C:\Users\hauke\Documents\OfferCalc> .\venv\Scripts\activate
 	(venv) PS C:\Users\hauke\Documents\OfferCalc> 
