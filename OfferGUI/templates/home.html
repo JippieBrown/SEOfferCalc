@@ -13,18 +13,19 @@ Homepage
       <p><input class="btn btn-outline-primary" type="file" name="file"></p>
       <p><input class="btn btn-outline-primary" type="submit" value="Submit"></p>
     </form>
-  </div>
-<br>
-  <div class="container" style="margin-top: 20px;">
+    <br>
     <h1>Existing project</h1>
-    <form method="POST" class="form-register" style="color:white">
-        {{ home_form.hidden_tag() }}
+    <form method="POST" action="http://localhost:5000/" class="form-register" style="color:white">
+      {{ home_form.hidden_tag() }}
       <div style="width: 500px;">
-      <p>{{ home_form.project(class="form-control") }}</p>
-      <p><button type="submit" name="LoadExistingProject" value="LoadExistingProject"
-        class="btn btn-outline-primary">Load</button></p>
-    </div>
+        <p>{{ home_form.project(class="form-control") }}</p>
+        <p><button type="submit" name="LoadExistingProject" value="LoadExistingProject"
+            class="btn btn-outline-primary">Load</button></p>
+      </div>
     </form>
+    <br>
+    <h1>My projects</h1>
+    <h6>...todo... where editor == current user</h6>
   </div>
 </body>
 {% endblock %}

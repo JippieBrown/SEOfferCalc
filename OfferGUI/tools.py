@@ -26,6 +26,7 @@ def XmlReader(filepath):
     with open(filepath) as fd:
             doc = xmltodict.parse(fd.read())
     item = doc['form1']
+    print(item)
     read_xml = temp_inquiry(firstname                = item['Vorname'],
                             lastname                 = item['Nachname'],
                             department               = item['Abteilung'],

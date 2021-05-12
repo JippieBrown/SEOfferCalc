@@ -104,7 +104,8 @@ class temp_project_info(db.Model):
     plant_type = db.Column(db.String())
     busbar = db.Column(db.String())
     number_of_bays = db.Column(db.Integer())
-
+    commissioning = db.Column(db.String())
+    
 class temp_staff_costs(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     Service = db.Column(db.String(length=30), nullable=False, unique=True)
@@ -156,6 +157,7 @@ class collected_projects(db.Model):
     plant_type = db.Column(db.String())
     busbar = db.Column(db.String())
     number_of_bays = db.Column(db.Integer())
+    commissioning = db.Column(db.String())
     # gascomp_empty = StringField(label='Gas compartments (empty)')
     # gascomp_pref = StringField(label='Gas compartments (prefilled)')
     # assembly_indoor = StringField(label='Assembly (indoor)')

@@ -22,5 +22,7 @@ login_manager.login_view = "login_page"
 login_manager.login_message_category = "info"
 
 from OfferGUI import routes
-
+from OfferGUI.tools import RemoveTemporaryItems
+RemoveTemporaryItems()
+print("temporary items in database removed!")
 
