@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, IntegerField, TextAreaField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError, NumberRange
 from OfferGUI.models import User, collected_projects
@@ -35,33 +35,66 @@ class ProjectForm(FlaskForm):
     '''
     #choices (represented by coerce) of selectfields in routes.py --> project_page
 
-    '''
-    def validate_project_name(self, project_name_to_check):
-        project_name = projinquiry_xmlect_info.query.filter_by(project_name=project_name_to_check.data).first()
-        if project_name:
-            raise ValidationError('Project name already exists!')
+    '''    
+    # def validate_project_name(self, project_name_to_check):
+    #     project_name = projinquiry_xmlect_info.query.filter_by(project_name=project_name_to_check.data).first()
+    #     if project_name:
+    #         raise ValidationError('Project name already exists!')
 
-    def validate_project_id(self, project_id_to_check):
-        project_id = inquiry_xml.query.filter_by(project_id=project_id_to_check.data).first()
-        if project_id:
-            raise ValidationError('Project ID already exists!')
+    # def validate_project_id(self, project_id_to_check):
+    #     project_id = inquiry_xml.query.filter_by(project_id=project_id_to_check.data).first()
+    #     if project_id:
+    #         raise ValidationError('Project ID already exists!')
+    ### Submit (Save-Button)
+    # submit = SubmitField(label='Save')
+    # inquiry info
+    first_name                 = StringField(label="Firstname")         
+    last_name                  = StringField(label="Lastname")         
+    department                 = StringField(label="Department")         
+    project_name               = StringField(label='Project name')             
+    country                    = StringField(label="Country")     
+    city                       = StringField(label="City")     
+    inquiry_date               = DateField(label="Inquiry date", format='%Y-%m-%d')             
+    plant_type                 = SelectField(u'Plant type', coerce=str)         
+    validity                   = DateField(label="Validity")         
+    protection_class_indoor    = SelectField(u'Protection class indoor', coerce=str)                      
+    protection_class_outdoor   = SelectField(u'Protection class outdoor', coerce=str)                          
+    calc_for                   = SelectField(u'Calculation for', coerce=str, validators=[DataRequired()])         
+    busbar                     = SelectField(u'Busbar', coerce=str)     
+    number_of_bays             = IntegerField(label='Number of bays')             
+    supervision                = SelectField(u'Site management', coerce=str)         
+    commissioning              = SelectField(u'Commissioning', coerce=str)            
+    mpd                        = SelectField(u'Manpower diagramm', coerce=str) 
+    language                   = SelectField(u'Language', coerce=str)         
+    tools                      = SelectField(u'Tools', coerce=str)     
+    hv_test_equipment          = SelectField(u'HV-Test equipment', coerce=str)     
+    transport                  = SelectField(u'Transports', coerce=str)
+    sec_works                  = SelectField(u'Secondary works', coerce=str)         
+    sec_works_no_of_bays       = IntegerField(label='Number of bays')                      
+    earthing                   = SelectField(u'Earthing', coerce=str)         
+    pd_measurement             = SelectField(u'HV-Test / PD-measurement', coerce=str)             
+    psd                        = SelectField(u'PSD Commissioning', coerce=str) 
+    actas                      = SelectField(u'ACTAS', coerce=str)     
+    libo                       = SelectField(u'Arc guard systems', coerce=str)
+    customer_training          = SelectField(u'Customer training', coerce=str)                
+    indoor_crane               = SelectField(u'Indoor crane', coerce=str)             
+    dc_supply                  = SelectField(u'DC supply', coerce=str) 
+    hv_plugs                   = SelectField(u'HV plugs', coerce=str)         
+    hv_plug_size               = SelectField(u'HV plug size', coerce=str)            
+    remark                     = TextAreaField(label="Remark")     
+    offer_until                = DateField(label="Offer until", format='%Y-%m-%d')          
+    kick_off_meeting           = DateField(label="Kick off meeting", format='%Y-%m-%d')                 
 
     ## project info
-    project_name = StringField(label='Project name')
-    project_manager_dept = StringField(label='Project manager / department')
-    order_indicator = StringField(label='Oder indicator')
-    site = StringField(label='Site')
-    customer = StringField(label='Customer')
-    ## further info
-    calc_for = SelectField(u'Calculation for', coerce=str, validators=[DataRequired()])
-    date = DateField(label='Date')#, format='%Y-%m-%d')
-    cost_determination = DateField(label='Cost determination until', format='%Y-%d-%m')
-    editor = SelectField(u'Editor', coerce=str)
     project_id = StringField(label='Project ID', validators=[DataRequired()])
-    ## plant info
-    plant_type = SelectField(u'Plant type', coerce=str)
-    busbar = SelectField(u'Busbar', coerce=str)
-    number_of_bays = IntegerField(label='Number of bays')
+    order_indicator = StringField(label='Oder indicator')
+    customer = StringField(label='Customer', validators=[DataRequired()])
+    offer_date = DateField(label='Date')#, format='%Y-%m-%d')
+    editor = SelectField(u'Editor', coerce=str)
+    
+
+
+
     gascomp_empty = StringField(label='Gas compartments (empty)')
     gascomp_pref = StringField(label='Gas compartments (prefilled)')
     assembly_indoor = StringField(label='Assembly (indoor)')
@@ -85,25 +118,9 @@ class ProjectForm(FlaskForm):
     arrival_departure_days = IntegerField(label='Arrival and departure days')
     country_factor = IntegerField(label='Country factor')
     customer_training_days = IntegerField(label='Customer training days')
-    # inquiry info
-    site_management = SelectField(u'Site management', coerce=str)
-    commissioning = SelectField(u'Commissioning', coerce=str)
-    manpower = SelectField(u'Manpower diagramm', coerce=str)
-    manpower_language = SelectField(u'Language', coerce=str)
-    tools = SelectField(u'Tools', coerce=str)
-    psd_comm = SelectField(u'PSD Commissioning', coerce=str)
-    hvt_pd_check = SelectField(u'HV-Test / PD-measurement', coerce=str)
-    actas = SelectField(u'ACTAS', coerce=str)
-    transports = SelectField(u'Transports', coerce=str)
-    indoor_crane = SelectField(u'Indoor crane', coerce=str)
-    protect_class_indoor= SelectField(u'Protection class indoor', coerce=str)
-    protect_class_outdoor = SelectField(u'Protection class outdoor', coerce=str)
-    earthing = SelectField(u'Earthing', coerce=str)
-    sec_wiring = SelectField(u'Secondary wiring', coerce=str)
-    submit = SubmitField(label='Save')
-    
+
 class SaveForm(FlaskForm):
-    submit = SubmitField(label='Save project info and start cost calculation')
+    submit = SubmitField(label='Save project!')
 
 class StaffCostForm(FlaskForm):
 
