@@ -70,7 +70,8 @@ def XmlReader(filepath):
                                  hv_plug_size             = item['Block6']['Kabelsteckbuchsen'],
                                  remark                   = item['Block6']['Bemerkung'],
                                  offer_until              = item['Block6']['DateField2'],
-                                 kick_off_meeting         = item['Block6']['DateField3'])
+                                 kick_off_meeting         = item['Block6']['DateField3'],
+                                 date_of_editing          = datetime.today())
 
     RemoveTemporaryItems()
     db.session.add(read_xml)
@@ -119,11 +120,11 @@ def SelectFieldSetter(form):
     form.mpd.choices                      = [k for k in db_yes_no]
     form.language.choices                 = [k for k in db_languages]
     form.tools.choices                    = [k for k in db_yes_no]
-    form.hv_test_equipment.choices        = [k for k in db_hvt_pd_check]
+    form.hv_test_equipment.choices        = [k for k in db_yes_no]
     form.transport.choices                = [k for k in db_yes_no]
     form.sec_works.choices                = [k for k in db_sec_wiring]
     form.earthing.choices                 = [k for k in db_yes_no]
-    form.pd_measurement.choices           = [k for k in db_yes_no]
+    form.pd_measurement.choices           = [k for k in db_hvt_pd_check]
     form.psd.choices                      = [k for k in db_yes_no]
     form.actas.choices                    = [k for k in db_actas]
     form.libo.choices                     = [k for k in db_yes_no]

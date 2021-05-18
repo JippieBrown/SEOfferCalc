@@ -5,8 +5,89 @@ Manpower
 {% endblock %}
 
 {% block content %}
-
-
+<!-- <table class="table table-hover table-dark" style="height: 100px;">
+    <thead>
+        <tr style="height: 65px;">
+            {% for item in project_info_items %}
+            <th scope="col">Active Project: {{ item.project_name }}</th>
+            <th scope="col">GIS: {{ item.plant_type }} with {{ item.number_of_bays }} bays and {{ item.busbar }}-Busbar</th>
+            <th scope="col">Calculation for: {{ item.calc_for }}</th>
+            <th scope="col" style="width: 250px;"> </th>
+            <th scope="col" style="width: 250px;"> </th>
+            <th scope="col">Editor: {{ item.editor }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table> -->
+<br>
+<form method="POST" class="form-register" style="color:white">
+    <div class="col-12">
+        <h3>Team - Installation</h3>
+        <div class="row">
+            <div class="col-6">
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center" style="width:50px">ID</th>
+                            <th scope="col" class="text-center">Group</th>   
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <thead>
+                        <th style="width:50px"><button type="submit" name="InstallationScopePlusBtn" value="InstallationScopePlusBtn"
+                                class="btn btn-outline-success" >+</button></th>
+                        <th>{{ manpower_form.group_scope_of_work_I(class="form-control") }}</th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_group_scope_of_work_items if item.team == "Supervisor" %}
+                        <tr>
+                            <td class="text-center" style="width:50px">{{ item.id }}</td>
+                            <td class="text-left">{{ item.group_scope_of_work }}</td>
+                            <td  style="width:50px"><button type="input" name="InstallationScopeMinusBtn" value="{{ item.id }}"
+                                    class="center btn btn-outline-danger">-</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br /><br />
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <h3>Team - Commissioning</h3>
+        <div class="row">
+            <div class="col-6">
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-center" style="width:50px">ID</th>
+                            <th scope="col" class="text-center">Group</th>   
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <thead>
+                        <th style="width:50px"><button type="submit" name="CommissioningScopePlusBtn" value="CommissioningScopePlusBtn"
+                                class="btn btn-outline-success" >+</button></th>
+                        <th>{{ manpower_form.group_scope_of_work_C(class="form-control") }}</th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_group_scope_of_work_items if item.team == "Commissioning Engineer" %}
+                        <tr>
+                            <td class="text-center" style="width:50px">{{ item.id }}</td>
+                            <td class="text-left">{{ item.group_scope_of_work }}</td>
+                            <td  style="width:50px"><button type="input" name="CommissioningScopeMinusBtn" value="{{ item.id }}"
+                                    class="center btn btn-outline-danger">-</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br /><br />
+            </div>
+        </div>
+    </div>
+</form>
 
 
 {% endblock %}

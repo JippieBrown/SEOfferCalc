@@ -4,7 +4,7 @@ from OfferGUI.forms import *
 from flask import render_template, redirect, request, url_for, flash, get_flashed_messages
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, date
 from OfferGUI.tools import AddRow, DelRow, XmlReader, RemoveTemporaryItems, SelectFieldSetter
 import os
 import xmltodict
@@ -18,6 +18,7 @@ def costs_page():
     #     flash(f"No project selected!", category='info')
     #     return redirect(url_for('home_page'))  
     # project_info = 
+    cost_form = CostForm()
     staff_form = StaffCostForm()
     install_form = InstallationToolsCostForm()
     sc = temp_staff_costs
@@ -31,7 +32,13 @@ def costs_page():
                                                    stat_c_s.service!="NULL")
     db_static_rentalmode = dde.query.with_entities(dde.rental_mode, 
                                                    dde.rental_mode).filter(
-                                                   dde.rental_mode!="NULL")    
+                                                   dde.rental_mode!="NULL")
+    db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
+                                                   dde.rental_mode_day).filter(
+                                                   dde.rental_mode_day!="NULL")
+    db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
+                                                   dde.rental_mode_week).filter(
+                                                   dde.rental_mode_week!="NULL")                                                                                                          
     db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
                                                            stat_c_it.service).filter(
                                                            stat_c_it.service!="NULL")  
@@ -48,8 +55,11 @@ def costs_page():
     # print(temp_sum)
 
     #setting choices
+    cost_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
+    cost_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]
     staff_form.service.choices = [k for k in db_static_staff]
     staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
+
     install_form.service.choices = [k for k in db_static_installation]
 
 
@@ -90,7 +100,8 @@ def costs_page():
             DelRow(temp_tool_costs)        
         return redirect(url_for('costs_page'))
     
-    return render_template('costs.html', staff_form=staff_form, 
+    return render_template('costs.html', cost_form=cost_form,
+                                         staff_form=staff_form, 
                                          install_form=install_form, 
                                          staff_items=staff_items, 
                                          tool_items=tool_items,
@@ -189,7 +200,12 @@ def home_page():
                                                    hv_plug_size             = project_row.hv_plug_size             ,
                                                    remark                   = project_row.remark                   ,
                                                    offer_until              = project_row.offer_until              ,
-                                                   kick_off_meeting         = project_row.kick_off_meeting         )
+                                                   kick_off_meeting         = project_row.kick_off_meeting         ,
+                                                   order_indicator          = project_row.order_indicator          ,
+                                                   customer                 = project_row.customer                 ,
+                                                   project_id               = project_row.project_id               ,
+                                                   editor                   = project_row.editor                   ,
+                                                   date_of_editing          = project_row.date_of_editing          )
                          
             db.session.add(temp_project_infos)
             db.session.commit()
@@ -234,24 +250,25 @@ def project_page():
         db_hv_plugs              = dde.query.with_entities(dde.hv_plugs, dde.hv_plugs).filter(dde.hv_plugs!="NULL")    
         db_hv_plug_size          = dde.query.with_entities(dde.hv_plug_size, dde.hv_plug_size).filter(dde.hv_plug_size!="NULL")        
         db_actas                 = dde.query.with_entities(dde.actas, dde.actas).filter(dde.actas!="NULL") 
-
+        db_validity              = dde.query.with_entities(dde.years, dde.years).filter(dde.years!="NULL") 
         # setting choices (forms.py --> class ProjectForm)
         form.editor.choices                   = [k for k in db_user]
         form.plant_type.choices               = [k for k in db_plant_type]
         form.protection_class_indoor.choices  = [k for k in db_protect_class_indoor]
         form.protection_class_outdoor.choices = [k for k in db_protect_class_outdoor]
         form.calc_for.choices                 = [k for k in db_calc_for]
+        form.validity.choices                 = [k for k in db_validity]
         form.busbar.choices                   = [k for k in db_busbar]
         form.supervision.choices              = [k for k in db_yes_no]
         form.commissioning.choices            = [k for k in db_yes_no]
         form.mpd.choices                      = [k for k in db_yes_no]
         form.language.choices                 = [k for k in db_languages]
         form.tools.choices                    = [k for k in db_yes_no]
-        form.hv_test_equipment.choices        = [k for k in db_hvt_pd_check]
+        form.hv_test_equipment.choices        = [k for k in db_yes_no]
         form.transport.choices                = [k for k in db_yes_no]
         form.sec_works.choices                = [k for k in db_sec_wiring]
         form.earthing.choices                 = [k for k in db_yes_no]
-        form.pd_measurement.choices           = [k for k in db_yes_no]
+        form.pd_measurement.choices           = [k for k in db_hvt_pd_check]
         form.psd.choices                      = [k for k in db_yes_no]
         form.actas.choices                    = [k for k in db_actas]
         form.libo.choices                     = [k for k in db_yes_no]
@@ -286,17 +303,18 @@ def project_page():
 
         if len(temp_project_info.query.all()) == 1:
             item = temp_project_info.query.get(1)
-            print(item.project_name)
+            # print(item.project_name)
             form.first_name.data               = item.first_name               
             form.last_name.data                = item.last_name                
             form.department.data               = item.department               
             form.project_name.data             = item.project_name             
             form.country.data                  = item.country                  
             form.city.data                     = item.city                     
-            if item.inquiry_date != None:
+            if item.inquiry_date != None and item.inquiry_date != "":
                 form.inquiry_date.data             = datetime.strptime(item.inquiry_date, '%Y-%m-%d')              
-            form.plant_type.data               = item.plant_type               
-            form.validity.data                 = item.validity                 
+            form.plant_type.data               = item.plant_type
+            if item.validity != None and item.validity != "":              
+                form.validity.data                 = datetime.strptime(item.validity , '%Y')                
             form.protection_class_indoor.data  = item.protection_class_indoor  
             form.protection_class_outdoor.data = item.protection_class_outdoor 
             form.calc_for.data                 = item.calc_for                 
@@ -322,27 +340,27 @@ def project_page():
             form.hv_plugs.data                 = item.hv_plugs                 
             form.hv_plug_size.data             = item.hv_plug_size             
             form.remark.data                   = item.remark  
-            if item.offer_until != None:                 
+            if item.offer_until != None and item.offer_until != "":                 
                 form.offer_until.data              = datetime.strptime(item.offer_until, '%Y-%m-%d')               
-            if item.kick_off_meeting != None:
+            if item.kick_off_meeting != None and item.kick_off_meeting != "":
                 form.kick_off_meeting.data         = datetime.strptime(item.kick_off_meeting, '%Y-%m-%d')          
             #set data on project info page
             form.project_id.data               = item.project_id      
             form.order_indicator.data          = item.order_indicator              
             form.customer.data                 = item.customer      
-            if item.offer_date != None:
-                form.offer_date.data           = datetime.strptime(item.offer_date, '%Y-%m-%d')    
+            if item.date_of_editing != None and item.date_of_editing != "":
+                form.date_of_editing.data           = datetime.strptime(str(date.today()), '%Y-%m-%d')    
             form.editor.data                   = item.editor       
 
         elif len(temp_project_info.query.all()) == 0:
             flash(f"No project selected!", category='info')
             return redirect(url_for('home_page'))  
-    # return render_template('project_info.html', form=form, save_form=save_form)
 
     if save_form.validate_on_submit():
         # project_output reads content of fields in project_info.html
         project_output = request.form
-        print(project_output['project_name'])
+
+        # print(project_output)
         if len(project_output) >= 1:
             # writing in databas
             temp_project_infos = temp_project_info(first_name               = project_output['first_name'] ,
@@ -383,26 +401,152 @@ def project_page():
                                                    kick_off_meeting         = project_output['kick_off_meeting'] ,
                                                    order_indicator          = project_output['order_indicator'] ,
                                                    customer                 = project_output['customer'] ,
-                                                   project_id               = project_output['project_id'] )
+                                                   project_id               = project_output['project_id'],
+                                                   editor                   = current_user.username,
+                                                   date_of_editing          = project_output['date_of_editing'] )
+
+            project_infos = collected_projects(first_name               = project_output['first_name'] ,
+                                               last_name                = project_output['last_name'] ,
+                                               department               = project_output['department'] ,
+                                               project_name             = project_output['project_name'] ,
+                                               country                  = project_output['country'] ,
+                                               city                     = project_output['city'] ,
+                                               inquiry_date             = project_output['inquiry_date'] ,
+                                               plant_type               = project_output['plant_type'] ,
+                                               validity                 = project_output['validity'] ,
+                                               protection_class_indoor  = project_output['protection_class_indoor'] ,
+                                               protection_class_outdoor = project_output['protection_class_outdoor'] ,
+                                               calc_for                 = project_output['calc_for'] ,
+                                               busbar                   = project_output['busbar'] ,
+                                               number_of_bays           = project_output['number_of_bays'] ,
+                                               supervision              = project_output['supervision'] ,
+                                               commissioning            = project_output['commissioning'] ,
+                                               mpd                      = project_output['mpd'] ,
+                                               language                 = project_output['language'] ,
+                                               tools                    = project_output['tools'] ,
+                                               hv_test_equipment        = project_output['hv_test_equipment'] ,
+                                               transport                = project_output['transport'] ,
+                                               sec_works                = project_output['sec_works'] ,
+                                               sec_works_no_of_bays     = project_output['sec_works_no_of_bays'] ,
+                                               earthing                 = project_output['earthing'] ,
+                                               pd_measurement           = project_output['pd_measurement'] ,
+                                               psd                      = project_output['psd'] ,
+                                               actas                    = project_output['actas'] ,
+                                               libo                     = project_output['libo'] ,
+                                               customer_training        = project_output['customer_training'] ,
+                                               indoor_crane             = project_output['indoor_crane'] ,
+                                               dc_supply                = project_output['dc_supply'] ,
+                                               hv_plugs                 = project_output['hv_plugs'] ,
+                                               hv_plug_size             = project_output['hv_plug_size'] ,
+                                               remark                   = project_output['remark'] ,
+                                               offer_until              = project_output['offer_until'] ,
+                                               kick_off_meeting         = project_output['kick_off_meeting'] ,
+                                               order_indicator          = project_output['order_indicator'] ,
+                                               customer                 = project_output['customer'] ,
+                                               project_id               = project_output['project_id'],
+                                               editor                   = current_user.username,
+                                               date_of_editing          = project_output['date_of_editing'] )            
+
+
             ### Overwrite existing project
-            project_row = collected_projects.query.filter_by(project_name=project_output['project_name']).first()
-            # print(project_row)  
-            if project_row != None:
-                db.session.delete(collected_projects.query.get(project_row.id))
-            # db.session.commit()
-            temp_project_info.query.delete()
-            db.session.commit()
-            # db.session.add(project_infos)
-            db.session.add(temp_project_infos)
-            
-            db.session.commit()
-            flash(f"Data from project page stored in database!", category='success')
-        return redirect(url_for('costs_page'))
+            project_row_name = collected_projects.query.filter_by(project_name=project_output['project_name']).first()
+            project_row_project_id= collected_projects.query.filter_by(project_id=project_output['project_id']).first()
+            # print(project_row)
+
+            if project_row_name != None and project_row_project_id != None:
+                db.session.delete(collected_projects.query.get(project_row_name.id))
+                # db.session.commit()
+                temp_project_info.query.delete()
+                db.session.commit()
+                db.session.add(project_infos)
+                db.session.add(temp_project_infos)
+                db.session.commit()
+                flash(f"Data overwritten in database!", category='success')
+                return redirect(url_for('manpower_page'))
+            elif project_row_name == None and project_row_project_id != None:
+                temp_project_info.query.delete()
+                db.session.commit()
+                db.session.add(temp_project_infos)
+                db.session.commit()
+                flash(f"Change Project ID!", category='danger')
+                return redirect(url_for('project_page'))
+            elif project_row_name == None and project_row_project_id == None: 
+                temp_project_info.query.delete()
+                db.session.commit()
+                db.session.add(project_infos)
+                db.session.add(temp_project_infos)
+                db.session.commit()
+                flash(f"Data from project page stored in database!", category='success')
+                return redirect(url_for('manpower_page'))     
     return render_template('project_info.html', form=form, save_form=save_form)
 
 @app.route('/manpower', methods = ['GET', 'POST'])
 def manpower_page():
+    slt = static_lead_times
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
-       return redirect(url_for('home_page'))      
-    return render_template('manpower_calc.html')
+       return redirect(url_for('home_page'))
+    manpower_form = ManpowerForm()      
+    #reading table data from database
+    temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
+    project_info_items = temp_project_info.query.all()
+
+    db_group_scope_I = slt.query.with_entities(slt.group_scope_of_work, 
+                                               slt.group_scope_of_work).filter(
+                                               slt.group_scope_of_work!="NULL" and slt.team=="Supervisor")
+
+    db_group_scope_C = slt.query.with_entities(slt.group_scope_of_work, 
+                                               slt.group_scope_of_work).filter(
+                                               slt.group_scope_of_work!="NULL" and slt.team=="Commissioning Engineer")
+
+    db_temp_group_scope_of_work_items = temp_group_scope_of_work.query.with_entities(
+                                        temp_group_scope_of_work.group_scope_of_work, 
+                                        temp_group_scope_of_work.group_scope_of_work).filter(
+                                        temp_group_scope_of_work.group_scope_of_work!="NULL")
+    #setting choices                                    
+    manpower_form.group_scope_of_work_I.choices = []
+    manpower_form.group_scope_of_work_C.choices = []
+    [manpower_form.group_scope_of_work_I.choices.append(k) for k in db_group_scope_I if 
+                                                                    k not in manpower_form.group_scope_of_work_I.choices and 
+                                                                    k not in db_temp_group_scope_of_work_items]
+    [manpower_form.group_scope_of_work_C.choices.append(k) for k in db_group_scope_C if 
+                                                                    k not in manpower_form.group_scope_of_work_C.choices and 
+                                                                    k not in db_temp_group_scope_of_work_items]
+
+    if request.method == 'POST':
+        ### Team - Installation
+        if request.form.get('InstallationScopePlusBtn'):
+            scope_of_work_output = request.form
+            print(scope_of_work_output)
+            if 'group_scope_of_work_I' in scope_of_work_output:
+                db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_I'],
+                                                        team                = "Supervisor"))
+                db.session.commit()
+                return redirect(url_for('manpower_page'))
+            else:
+                flash(f"No scopes available!", category='warning')
+        if request.form.get('InstallationScopeMinusBtn'):
+            # print(int(request.form.get('InstallationScopeMinusBtn')))
+            DelRow(temp_group_scope_of_work, int(request.form.get('InstallationScopeMinusBtn')))
+            return redirect(url_for('manpower_page'))
+
+        ### Team - Commissioning
+        if request.form.get('CommissioningScopePlusBtn'):
+            scope_of_work_output = request.form
+            print(scope_of_work_output)
+            if 'group_scope_of_work_C' in scope_of_work_output:
+                db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_C'],
+                                                        team                = "Commissioning Engineer"))
+                db.session.commit()
+                return redirect(url_for('manpower_page'))
+            else:
+                flash(f"No scopes available!", category='warning')
+        if request.form.get('CommissioningScopeMinusBtn'):
+            # print(int(request.form.get('InstallationScopeMinusBtn')))
+            DelRow(temp_group_scope_of_work, int(request.form.get('CommissioningScopeMinusBtn')))
+            return redirect(url_for('manpower_page'))
+
+        
+    return render_template('manpower_calc.html', manpower_form=manpower_form,
+                                                 temp_group_scope_of_work_items=temp_group_scope_of_work_items,
+                                                 project_info_items=project_info_items,)

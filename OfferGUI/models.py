@@ -48,44 +48,19 @@ class static_costs_travel_accommodation(db.Model):
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
-class temp_inquiry(db.Model):
-    id                       = db.Column(db.Integer(), primary_key=True)
-    first_name               = db.Column(db.String())
-    last_name                = db.Column(db.String())
-    department               = db.Column(db.String())
-    project_name             = db.Column(db.String())
-    country                  = db.Column(db.String())
-    city                     = db.Column(db.String())
-    inquiry_date             = db.Column(db.String())
-    plant_type               = db.Column(db.String())    
-    validity                 = db.Column(db.String())
-    protection_class_indoor  = db.Column(db.String())
-    protection_class_outdoor = db.Column(db.String())
-    calc_for                 = db.Column(db.String())
-    busbar                   = db.Column(db.String())
-    number_of_bays           = db.Column(db.String())
-    supervision              = db.Column(db.String())
-    commissioning            = db.Column(db.String())
-    mpd                      = db.Column(db.String())
-    language                 = db.Column(db.String())
-    tools                    = db.Column(db.String())
-    hv_test_equipment        = db.Column(db.String())
-    transport                = db.Column(db.String())
-    sec_works                = db.Column(db.String())
-    sec_works_no_of_bays     = db.Column(db.String())
-    earthing                 = db.Column(db.String())
-    pd_measurement           = db.Column(db.String())
-    psd                      = db.Column(db.String())
-    actas                    = db.Column(db.String())
-    libo                     = db.Column(db.String())
-    customer_training        = db.Column(db.String())
-    indoor_crane             = db.Column(db.String())
-    dc_supply                = db.Column(db.String())
-    hv_plugs                 = db.Column(db.String())
-    hv_plug_size             = db.Column(db.String())
-    remark                   = db.Column(db.String())
-    offer_until              = db.Column(db.String())
-    kick_off_meeting         = db.Column(db.String())
+class static_lead_times(db.Model):
+    id                   = db.Column(db.Integer(), primary_key=True)
+    plant_type           = db.Column(db.String())
+    team                 = db.Column(db.String())
+    group_scope_of_work  = db.Column(db.String())
+    scope_of_work        = db.Column(db.String())
+    work_time            = db.Column(db.Integer())
+    work_time_unit       = db.Column(db.String())
+
+class temp_group_scope_of_work(db.Model):
+    id                   = db.Column(db.Integer(), primary_key=True)
+    team                 = db.Column(db.String())    
+    group_scope_of_work  = db.Column(db.String())          
 
 class temp_project_info(db.Model):
     ### inquiry info
@@ -130,7 +105,7 @@ class temp_project_info(db.Model):
     project_id                    = db.Column(db.String())
     order_indicator               = db.Column(db.String())
     customer                      = db.Column(db.String())
-    offer_date                    = db.Column(db.String())
+    date_of_editing               = db.Column(db.String())
     editor                        = db.Column(db.String())
     def __repr__(self):
         return f'project_info {self.name}'   
@@ -169,9 +144,12 @@ class dropdown_elements(db.Model):
     protect_class_indoor  = db.Column(db.String())
     protect_class_outdoor = db.Column(db.String())
     rental_mode           = db.Column(db.String())
+    rental_mode_day       = db.Column(db.String())
+    rental_mode_week      = db.Column(db.String())
     hv_plugs              = db.Column(db.String())
     hv_plug_size          = db.Column(db.String())
     actas                 = db.Column(db.String())
+    years                 = db.Column(db.String())  
     # def __repr__(self):
     #     return f'dropdown_elements {self.name}'
 
@@ -181,7 +159,7 @@ class collected_projects(db.Model):
     first_name                    = db.Column(db.String())           
     last_name                     = db.Column(db.String())          
     department                    = db.Column(db.String())            
-    project_name                  = db.Column(db.String())              
+    project_name                  = db.Column(db.String(), unique=True)              
     country                       = db.Column(db.String())         
     city                          = db.Column(db.String())      
     inquiry_date                  = db.Column(db.String())              
@@ -215,10 +193,10 @@ class collected_projects(db.Model):
     offer_until                   = db.Column(db.String())             
     kick_off_meeting              = db.Column(db.String())                  
     ### project page info
-    project_id                    = db.Column(db.String())
+    project_id                    = db.Column(db.String(), unique=True)
     order_indicator               = db.Column(db.String())
     customer                      = db.Column(db.String())
-    offer_date                    = db.Column(db.String())
+    date_of_editing               = db.Column(db.String())
     editor                        = db.Column(db.String())
 
 

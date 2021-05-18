@@ -11,6 +11,7 @@ Project Info
         {{ form.hidden_tag() }}
         <div class="col-2" style="margin-top:20px;">
             {{ save_form.submit(class="btn btn-lg btn-block btn-primary") }}
+
         </div>
         <br>
         <div class="col-12">
@@ -47,6 +48,10 @@ Project Info
                                 <th scope="row">{{ form.customer.label() }}</th>
                                 <td>{{ form.customer(class="form-control")}}</td>
                             </tr>
+                            <tr>
+                                <th scope="row">{{ form.order_indicator.label() }}</th>
+                                <td>{{ form.order_indicator(class="form-control" )}}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -56,19 +61,31 @@ Project Info
                         <tbody>
                             <tr>
                                 <th scope="row">{{ form.calc_for.label() }}</th>
-                                <td>{{ form.calc_for(class="form-control")}}</td>
+                                <td>{{ form.calc_for(class="form-control", style="width: 150px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.validity.label() }}</th>
+                                <td>{{ form.validity(class="form-control", style="width: 100px;")}}</td>
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.inquiry_date.label() }}</th>
-                                <td>{{ form.inquiry_date(class="form-control")}}</td>
+                                <td>{{ form.inquiry_date(class="form-control", style="width: 200px;")}}</td>
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.offer_until.label()}}</th>
-                                <td>{{ form.offer_until(class="form-control")}}</td>
+                                <td>{{ form.offer_until(class="form-control", style="width: 200px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.kick_off_meeting.label()}}</th>
+                                <td>{{ form.kick_off_meeting(class="form-control", style="width: 200px;")}}</td>
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.editor.label() }}</th>
                                 <td>{{ form.editor(class="form-control") }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.date_of_editing.label()}}</th>
+                                <td>{{ form.date_of_editing(class="form-control", style="width: 200px;")}}</td>
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.project_id.label() }}</th>
@@ -80,10 +97,6 @@ Project Info
                                         {{ form.project_id(class="form-control") }}
                                     </div>
                                 </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">{{ form.order_indicator.label() }}</th>
-                                <td>{{ form.order_indicator(class="form-control" )}}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -267,7 +280,11 @@ Project Info
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.hv_test_equipment.label() }}</th>
-                                <td>{{ form.hv_test_equipment(class="form-control", style="width: 320px;")}}</td>
+                                <td>{{ form.hv_test_equipment(class="form-control", style="width: 100px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.pd_measurement.label() }}</th>
+                                <td>{{ form.pd_measurement(class="form-control", style="width: 320px;")}}</td>
                             </tr>
                             <tr>
                                 <th scope="row">{{ form.actas.label() }}</th>
@@ -294,10 +311,26 @@ Project Info
                                 <td>{{ form.earthing(class="form-control", style="width: 100px;")}}</td>
                             </tr>
                             <tr>
-                                <th scope="row">{{ form.sec_works.label() }}</th>
+                                <th scope="row">{{ form.sec_works.label() }} / Bays</th>
                                 <td>{{ form.sec_works(class="form-control", style="width: 200px;")}}
                                     {{ form.sec_works_no_of_bays(class="form-control", style="width: 100px;")}}
                                 </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.libo.label() }}</th>
+                                <td>{{ form.libo(class="form-control", style="width: 100px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.customer_training.label() }}</th>
+                                <td>{{ form.customer_training(class="form-control", style="width: 100px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.dc_supply.label() }}</th>
+                                <td>{{ form.dc_supply(class="form-control", style="width: 100px;")}}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">{{ form.hv_plugs.label() }} / Size</th>
+                                <td>{{ form.hv_plugs(class="form-control", style="width: 150px;")}} {{ form.hv_plug_size(class="form-control", style="width: 100px;")}}</td>
                             </tr>
                         </tbody>
                     </table>

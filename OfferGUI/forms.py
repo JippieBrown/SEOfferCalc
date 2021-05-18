@@ -41,12 +41,12 @@ class ProjectForm(FlaskForm):
     #     if project_name:
     #         raise ValidationError('Project name already exists!')
 
-    # def validate_project_id(self, project_id_to_check):
-    #     project_id = inquiry_xml.query.filter_by(project_id=project_id_to_check.data).first()
-    #     if project_id:
-    #         raise ValidationError('Project ID already exists!')
+    def validate_project_id(self, project_id_to_check):
+        project_id = collected_projects.query.filter_by(project_id=project_id_to_check.data).first()
+        if project_id:
+            raise ValidationError('Project ID already exists!')
     ### Submit (Save-Button)
-    # submit = SubmitField(label='Save')
+    submit = SubmitField(label='Save')
     # inquiry info
     first_name                 = StringField(label="Firstname")         
     last_name                  = StringField(label="Lastname")         
@@ -56,7 +56,7 @@ class ProjectForm(FlaskForm):
     city                       = StringField(label="City")     
     inquiry_date               = DateField(label="Inquiry date", format='%Y-%m-%d')             
     plant_type                 = SelectField(u'Plant type', coerce=str)         
-    validity                   = DateField(label="Validity")         
+    validity                   = SelectField(u'Validity', coerce=str)
     protection_class_indoor    = SelectField(u'Protection class indoor', coerce=str)                      
     protection_class_outdoor   = SelectField(u'Protection class outdoor', coerce=str)                          
     calc_for                   = SelectField(u'Calculation for', coerce=str, validators=[DataRequired()])         
@@ -89,7 +89,7 @@ class ProjectForm(FlaskForm):
     project_id = StringField(label='Project ID', validators=[DataRequired()])
     order_indicator = StringField(label='Oder indicator')
     customer = StringField(label='Customer', validators=[DataRequired()])
-    offer_date = DateField(label='Date')#, format='%Y-%m-%d')
+    date_of_editing = DateField(label='Date of editing', format='%Y-%m-%d')
     editor = SelectField(u'Editor', coerce=str)
     
 
@@ -122,6 +122,10 @@ class ProjectForm(FlaskForm):
 class SaveForm(FlaskForm):
     submit = SubmitField(label='Save project!')
 
+class CostForm(FlaskForm):
+    rental_mode_day = SelectField(u'Hours per day', coerce=str)
+    rental_mode_week = SelectField(u'Days per week', coerce=str)
+
 class StaffCostForm(FlaskForm):
 
     service = SelectField(u'Service', coerce=str)
@@ -137,3 +141,7 @@ class InstallationToolsCostForm(FlaskForm):
     rentalmode = SelectField(u'Rental mode', coerce=str)
     rentalunits = IntegerField(label='Rental units')
     remark = StringField(label='Remark')
+
+class ManpowerForm(FlaskForm):
+    group_scope_of_work_I = SelectField(u'Group of scope', coerce=str)
+    group_scope_of_work_C = SelectField(u'Group of scope', coerce=str)

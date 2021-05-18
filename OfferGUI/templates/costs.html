@@ -5,18 +5,31 @@ Costs
 {% endblock %}
 
 {% block content %}
-<table class="table table-hover table-dark">
+<table class="table table-hover table-dark" >
+    <thead>
+        <tr style="height: 65px;">
+            {% for item in project_info_items %}
+            <th scope="col">Active Project: {{ item.project_name }}</th>
+            <th scope="col">GIS: {{ item.plant_type }} with {{ item.number_of_bays }} bays and {{ item.busbar }}-Busbar</th>
+            <th scope="col">Calculation for: {{ item.calc_for }}</th>
+            <th scope="col" style="width: 250px;"> {{ cost_form.rental_mode_day(class="form-control", style="width: 150px;")}}</th>
+            <th scope="col" style="width: 250px;"> {{ cost_form.rental_mode_week(class="form-control", style="width: 150px;")}}</th>
+            <th scope="col">Editor: {{ item.editor }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+</table>
+<br>
+<table class="table table-hover table-secondary">
     <thead>
         <tr>
             {% for item in project_info_items %}
-            <th scope="col">Active Project:</th>
-            <th scope="col">ID: {{ item.project_id }}</th>
-            <th scope="col">Name: {{ item.project_name }}</th>
-            <th scope="col">Calculation for: {{ item.calc_for }}</th>
-            <th scope="col">Editor: {{ item.editor }}</th>
-            <!-- <th scope="col"></th>
-            <th scope="col"></th>
-            <th scope="col"></th> -->
+            <td>--- Supervison? {{ item.supervision }} ---
+                Commissioning? {{ item.commissioning }} ---
+                Painting? {{ item.protection_class_indoor }} / {{ item.protection_class_outdoor }} ---
+                Wiring? {{ item.sec_works }} for {{ item.sec_works_no_of_bays }} bays ---
+                Soldering? --- Welding? ---
+            </td>
             {% endfor %}
         </tr>
     </thead>
@@ -31,7 +44,7 @@ Costs
                         <tr>
                             <th scope="col" class="text-center" style="width:50px">ID</th>
                             <th scope="col" class="text-center" style="width:300px">Service</th>
-                            <th scope="col" class="text-right" style="width:200px">Rental units</th>
+                            <th scope="col" class="text-right" style="width:150px">Rental units</th>
                             <th scope="col" class="text-left" style="width:200px">Rental mode</th>
                             <th scope="col" class="text-center">Remark</th>
                             <th scope="col" class="text-center" style="width:100px">Unit price</th>
