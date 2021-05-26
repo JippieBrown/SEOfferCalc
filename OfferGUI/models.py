@@ -7,6 +7,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 class User(db.Model, UserMixin):
+    __bind_key__ = 'shared'
     id               = db.Column(db.Integer(), primary_key=True)
     username         = db.Column(db.String(length=30), nullable=False, unique=True)
     email_address    = db.Column(db.String(length=50), nullable=False, unique=True)
@@ -26,14 +27,17 @@ class static_costs_commissioning_tools(db.Model):
     service     = db.Column(db.String())
 
 class static_costs_installation_tools(db.Model):
+    __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
 class static_costs_site_equipment(db.Model):
+    __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
 class static_costs_staff(db.Model):
+    __bind_key__ = 'local'
     id                      = db.Column(db.Integer(), primary_key=True)
     service                 = db.Column(db.String())
     price_reg_inquiry_RC    = db.Column(db.String())
@@ -41,14 +45,17 @@ class static_costs_staff(db.Model):
     price_reg_inquiry_RC_DE = db.Column(db.String())
 
 class static_costs_testing_tools(db.Model):
+    __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
 class static_costs_travel_accommodation(db.Model):
+    __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
 class static_lead_times(db.Model):
+    __bind_key__ = 'local'
     id                   = db.Column(db.Integer(), primary_key=True)
     plant_type           = db.Column(db.String())
     team                 = db.Column(db.String())
@@ -57,12 +64,22 @@ class static_lead_times(db.Model):
     work_time            = db.Column(db.Integer())
     work_time_unit       = db.Column(db.String())
 
+class gantt(db.Model):
+    __bind_key__ = 'local'
+    id         = db.Column(db.Integer(), primary_key=True)
+    Task       = db.Column(db.String())
+    Start      = db.Column(db.String())
+    Finish     = db.Column(db.String())
+    Resource   = db.Column(db.String())
+
 class temp_group_scope_of_work(db.Model):
+    __bind_key__ = 'local'
     id                   = db.Column(db.Integer(), primary_key=True)
     team                 = db.Column(db.String())    
     group_scope_of_work  = db.Column(db.String())          
 
 class temp_project_info(db.Model):
+    __bind_key__ = 'local'
     ### inquiry info
     id                            = db.Column(db.Integer(), primary_key=True)
     first_name                    = db.Column(db.String())           
@@ -111,6 +128,7 @@ class temp_project_info(db.Model):
         return f'project_info {self.name}'   
 
 class temp_staff_costs(db.Model):
+    __bind_key__ = 'local'
     id              = db.Column(db.Integer(), primary_key=True)
     Service         = db.Column(db.String(length=30), nullable=False, unique=True)
     UnitPrice       = db.Column(db.Integer(), nullable=False)
@@ -122,6 +140,7 @@ class temp_staff_costs(db.Model):
     #     return f'staff_costs {self.name}'
     
 class temp_tool_costs(db.Model):
+    __bind_key__ = 'local'
     id              = db.Column(db.Integer(), primary_key=True)
     Service         = db.Column(db.String(length=30), nullable=False, unique=True)
     UnitPrice       = db.Column(db.Integer(), nullable=False)
@@ -133,6 +152,7 @@ class temp_tool_costs(db.Model):
     #     return f'staff_costs {self.name}'
 
 class dropdown_elements(db.Model):
+    __bind_key__ = 'local'
     id                    = db.Column(db.Integer(), primary_key=True)
     plant_type            = db.Column(db.String())
     busbar                = db.Column(db.String())
@@ -154,6 +174,7 @@ class dropdown_elements(db.Model):
     #     return f'dropdown_elements {self.name}'
 
 class collected_projects(db.Model):
+    __bind_key__ = 'shared'
     ### inquiry info
     id                            = db.Column(db.Integer(), primary_key=True)    
     first_name                    = db.Column(db.String())           

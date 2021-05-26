@@ -84,6 +84,7 @@ def RemoveTemporaryItems():
     temp_staff_costs.query.delete()
     temp_tool_costs.query.delete()
     db.session.commit()
+    print("temp-tables emptied in database!")
 
 def SelectFieldSetter(form):
     '''

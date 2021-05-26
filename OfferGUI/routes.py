@@ -8,145 +8,48 @@ from datetime import datetime, date
 from OfferGUI.tools import AddRow, DelRow, XmlReader, RemoveTemporaryItems, SelectFieldSetter
 import os
 import xmltodict
-@app.route('/costs', methods=['POST', 'GET'])
-@login_required
-def costs_page():
-    if len(temp_project_info.query.all()) == 0:
-       flash(f"No project selected!", category='info')
-       return redirect(url_for('home_page'))  
-    # if len(temp_project_info.query.all()) == 0:
-    #     flash(f"No project selected!", category='info')
-    #     return redirect(url_for('home_page'))  
-    # project_info = 
-    cost_form = CostForm()
-    staff_form = StaffCostForm()
-    install_form = InstallationToolsCostForm()
-    sc = temp_staff_costs
-    stat_c_s = static_costs_staff
-    stat_c_it = static_costs_installation_tools
-    # class from from models-py
-    dde = dropdown_elements
-    #reading dropdown choices from database
-    db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
-                                                   stat_c_s.service).filter(
-                                                   stat_c_s.service!="NULL")
-    db_static_rentalmode = dde.query.with_entities(dde.rental_mode, 
-                                                   dde.rental_mode).filter(
-                                                   dde.rental_mode!="NULL")
-    db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
-                                                   dde.rental_mode_day).filter(
-                                                   dde.rental_mode_day!="NULL")
-    db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
-                                                   dde.rental_mode_week).filter(
-                                                   dde.rental_mode_week!="NULL")                                                                                                          
-    db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
-                                                           stat_c_it.service).filter(
-                                                           stat_c_it.service!="NULL")  
+###
+import pandas as pd
+import json
+import plotly
+import plotly.express as px
+import plotly.figure_factory as ff
+import plotly.io as pio
+@app.route('/chart1')
+def chart1():
+    # df = gantt.query.all()
+    df = [dict(Task="Job-1", Start='2017-01', Finish='2017-02', Resource='Complete'),
+          dict(Task="Job-1", Start='2017-02', Finish='2017-03', Resource='Incomplete'),
+          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Not Started'),
+          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Complete'),
+          dict(Task="Job-3", Start='2017-03', Finish='2017-03', Resource='Not Started'),
+          dict(Task="Job-3", Start='2017-04', Finish='2017-04', Resource='Not Started'),
+          dict(Task="Job-3", Start='2017-05', Finish='2017-06', Resource='Not Started'),
+          dict(Task="Job-4", Start='2017-01', Finish='2017-03', Resource='Complete')]
+    # print(df)
+    # df = gantt.query.all()
+    # print(df)
+    colors = {'Not Started': 'rgb(220, 0, 0)',
+            'Incomplete': (1, 0.9, 0.16),
+            'Complete': 'rgb(0, 255, 0)'}
 
-    #reading table data from database
-    staff_items = temp_staff_costs.query.all()
-    tool_items = temp_tool_costs.query.all()
-    project_info_items = temp_project_info.query.all()
+    fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True,
+                        group_tasks=True,showgrid_x=True,showgrid_y=True)
 
-    #select items by column name
-    temp_calc_for = [k.calc_for for k in project_info_items]
-    temp_sum_total = sum([k.Sum for k in staff_items])
-    # print(temp_calc_for)
-    # print(temp_sum)
+    fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+                       'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
+                       'font_color':'white',
+                       'width':1000,
+                       'height':400,
+                       'grid_ygap':1,
+                       'grid_columns':1})
 
-    #setting choices
-    cost_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
-    cost_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]
-    staff_form.service.choices = [k for k in db_static_staff]
-    staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    install_form.service.choices = [k for k in db_static_installation]
+    return render_template('notdash2.html', graphJSON=graphJSON)
 
 
 
-    # if temp_calc_for == ['RC']:
-    #     print(temp_calc_for)
-
-    if request.method == 'POST':
-        if request.form.get('StaffCostPlusBtn'):
-            staff_cost_output = [request.form[key] for key in request.form.keys()]
-            # print(staff_cost_output)
-            staff_form.service.data = staff_cost_output[1]
-            staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
-            if temp_calc_for == ['RC']:
-                staff_price_item = staff_price_row.price_reg_inquiry_RC
-                # print(staff_price_item)
-            elif temp_calc_for == ['PRO GIS']:
-                staff_price_item = staff_price_row.price_reg_inquiry_OE
-                # print(staff_price_item)
-            elif temp_calc_for == ['DE TM']:
-                staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
-            # print(int(staff_price_item)*int(staff_cost_output[2]))                                
-            sum_staff_item = int(staff_price_item)*int(staff_cost_output[2])
-            staff_form.rentalmode.data = staff_cost_output[3]
-            staff_form.rentalunits.data = staff_cost_output[2]
-            staff_form.remark.data = staff_cost_output[4]
-            if int(staff_form.rentalunits.data) > 0:
-                AddRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
-            else:
-                flash(f"Rental unit must be greater than zero", category='danger')
-
-        elif request.form.get('StaffCostMinusBtn'): 
-            # print(request.form.get('StaffCostMinusBtn'))    
-            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
-        elif request.form.get('ToolCostPlusBtn'):
-            AddRow(temp_tool_costs)
-        elif request.form.get('ToolCostMinusBtn'):
-            DelRow(temp_tool_costs)        
-        return redirect(url_for('costs_page'))
-    
-    return render_template('costs.html', cost_form=cost_form,
-                                         staff_form=staff_form, 
-                                         install_form=install_form, 
-                                         staff_items=staff_items, 
-                                         tool_items=tool_items,
-                                         project_info_items=project_info_items,
-                                         temp_sum_total=temp_sum_total)
-
-@app.route('/register', methods=['POST', 'GET'])
-def register_page():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        user_to_create = User(username=form.username.data,
-                              email_address=form.email_address.data,
-                              password=form.password1.data)
-        db.session.add(user_to_create)
-        db.session.commit()
-        login_user(user_to_create)
-        flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
-        return redirect(url_for('home_page'))
-    if form.errors != {}: #If there are not errors from the validations
-        for err_msg in form.errors.values():
-            flash(f'There was an error with creating a user: {err_msg}', category='danger')
-    return render_template('register.html', form=form)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login_page():
-    RemoveTemporaryItems()
-    form = LoginForm()
-    if form.validate_on_submit():
-        attempted_user = User.query.filter_by(username=form.username.data).first()
-        if attempted_user and attempted_user.check_password_correction(
-            attempted_password=form.password.data):
-            login_user(attempted_user)
-            flash(f'Success! You are logged in as: {attempted_user.username}', category='success')
-            return redirect(url_for('home_page'))
-        else:
-            flash(f'User and/or Password wrong! Try again', category='success')
-
-    return render_template('login.html', form=form)
-
-@app.route('/logout', methods=['GET', 'POST'])
-def logout_page():
-    RemoveTemporaryItems()
-    logout_user()
-    flash("You have been logged out!", category='info')
-    return redirect(url_for("home_page"))
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -228,7 +131,6 @@ def upload_file():
             return redirect(url_for('home_page'))
 
 @app.route('/project', methods=['GET', 'POST'])
-@login_required
 def project_page():
     save_form = SaveForm()
     form = ProjectForm()
@@ -481,16 +383,55 @@ def project_page():
     return render_template('project_info.html', form=form, save_form=save_form)
 
 @app.route('/manpower', methods = ['GET', 'POST'])
+
 def manpower_page():
     slt = static_lead_times
+    sc = temp_staff_costs
+    stat_c_s = static_costs_staff
+    
+
+    df = [dict(Task="Job-1", Start='2017-01', Finish='2017-02', Resource='Complete'),
+          dict(Task="Job-1", Start='2017-02', Finish='2017-03', Resource='Incomplete'),
+          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Not Started'),
+          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Complete'),
+          dict(Task="Job-3", Start='2017-03', Finish='2017-03', Resource='Not Started'),
+          dict(Task="Job-3", Start='2017-04', Finish='2017-04', Resource='Not Started'),
+          dict(Task="Job-3", Start='2017-05', Finish='2017-06', Resource='Not Started'),
+          dict(Task="Job-4", Start='2017-01', Finish='2017-03', Resource='Complete')]
+    # print(df)
+    # df = gantt.query.all()
+    # print(df)
+    colors = {'Not Started': 'rgb(220, 0, 0)',
+            'Incomplete': (1, 0.9, 0.16),
+            'Complete': 'rgb(0, 255, 0)'}
+
+    fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True,
+                        group_tasks=True,showgrid_x=True,showgrid_y=True)
+
+    fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+                       'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
+                       'font_color':'white',
+                       'width':1000,
+                       'height':400,
+                       'grid_ygap':1,
+                       'grid_columns':1})
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+
+
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
        return redirect(url_for('home_page'))
+    staff_form = StaffCostForm()
     manpower_form = ManpowerForm()      
     #reading table data from database
     temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
     project_info_items = temp_project_info.query.all()
-
+    db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
+                                                   stat_c_s.service).filter(
+                                                   stat_c_s.service!="NULL")
     db_group_scope_I = slt.query.with_entities(slt.group_scope_of_work, 
                                                slt.group_scope_of_work).filter(
                                                slt.group_scope_of_work!="NULL" and slt.team=="Supervisor")
@@ -503,7 +444,9 @@ def manpower_page():
                                         temp_group_scope_of_work.group_scope_of_work, 
                                         temp_group_scope_of_work.group_scope_of_work).filter(
                                         temp_group_scope_of_work.group_scope_of_work!="NULL")
-    #setting choices                                    
+    staff_items = temp_staff_costs.query.all()
+    #setting choices                                 
+    staff_form.service.choices = [k for k in db_static_staff]   
     manpower_form.group_scope_of_work_I.choices = []
     manpower_form.group_scope_of_work_C.choices = []
     [manpower_form.group_scope_of_work_I.choices.append(k) for k in db_group_scope_I if 
@@ -514,10 +457,20 @@ def manpower_page():
                                                                     k not in db_temp_group_scope_of_work_items]
 
     if request.method == 'POST':
-        ### Team - Installation
+        ### Staff
+        if request.form.get('StaffCostPlusBtn'):
+            staff_cost_output = request.form
+            # print(staff_cost_output)
+            staff_form.service.data = staff_cost_output['service']
+            if 'service' in staff_cost_output:
+                db.session.add(temp_staff_costs(Service = staff_cost_output['service']))
+                db.session.commit()
+                return redirect(url_for('manpower_page'))
+        elif request.form.get('StaffCostMinusBtn'): 
+            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
+        ### Installation scopes
         if request.form.get('InstallationScopePlusBtn'):
             scope_of_work_output = request.form
-            print(scope_of_work_output)
             if 'group_scope_of_work_I' in scope_of_work_output:
                 db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_I'],
                                                         team                = "Supervisor"))
@@ -526,14 +479,12 @@ def manpower_page():
             else:
                 flash(f"No scopes available!", category='warning')
         if request.form.get('InstallationScopeMinusBtn'):
-            # print(int(request.form.get('InstallationScopeMinusBtn')))
             DelRow(temp_group_scope_of_work, int(request.form.get('InstallationScopeMinusBtn')))
             return redirect(url_for('manpower_page'))
 
-        ### Team - Commissioning
+        ### Commissioning scopes
         if request.form.get('CommissioningScopePlusBtn'):
             scope_of_work_output = request.form
-            print(scope_of_work_output)
             if 'group_scope_of_work_C' in scope_of_work_output:
                 db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_C'],
                                                         team                = "Commissioning Engineer"))
@@ -542,11 +493,157 @@ def manpower_page():
             else:
                 flash(f"No scopes available!", category='warning')
         if request.form.get('CommissioningScopeMinusBtn'):
-            # print(int(request.form.get('InstallationScopeMinusBtn')))
             DelRow(temp_group_scope_of_work, int(request.form.get('CommissioningScopeMinusBtn')))
             return redirect(url_for('manpower_page'))
 
-        
+        # print(staff_items)
     return render_template('manpower_calc.html', manpower_form=manpower_form,
+                                                 staff_form=staff_form,
+                                                 staff_items=staff_items, 
                                                  temp_group_scope_of_work_items=temp_group_scope_of_work_items,
-                                                 project_info_items=project_info_items,)
+                                                 project_info_items=project_info_items,
+                                                 graphJSON=graphJSON)
+
+@app.route('/costs', methods=['POST', 'GET'])
+def costs_page():
+    if len(temp_project_info.query.all()) == 0:
+       flash(f"No project selected!", category='info')
+       return redirect(url_for('home_page'))  
+    # if len(temp_project_info.query.all()) == 0:
+    #     flash(f"No project selected!", category='info')
+    #     return redirect(url_for('home_page'))  
+    # project_info = 
+    cost_form = CostForm()
+    staff_form = StaffCostForm()
+    install_form = InstallationToolsCostForm()
+    sc = temp_staff_costs
+    stat_c_s = static_costs_staff
+    stat_c_it = static_costs_installation_tools
+    # class from from models-py
+    dde = dropdown_elements
+    #reading dropdown choices from database
+    db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
+                                                   stat_c_s.service).filter(
+                                                   stat_c_s.service!="NULL")
+    db_static_rentalmode = dde.query.with_entities(dde.rental_mode, 
+                                                   dde.rental_mode).filter(
+                                                   dde.rental_mode!="NULL")
+    db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
+                                                   dde.rental_mode_day).filter(
+                                                   dde.rental_mode_day!="NULL")
+    db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
+                                                   dde.rental_mode_week).filter(
+                                                   dde.rental_mode_week!="NULL")                                                                                                          
+    db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
+                                                           stat_c_it.service).filter(
+                                                           stat_c_it.service!="NULL")  
+
+    #reading table data from database
+    staff_items = temp_staff_costs.query.all()
+    tool_items = temp_tool_costs.query.all()
+    project_info_items = temp_project_info.query.all()
+
+    #select items by column name
+    temp_calc_for = [k.calc_for for k in project_info_items]
+    temp_sum_total = sum([k.Sum for k in staff_items])
+    # print(temp_calc_for)
+    # print(temp_sum)
+
+    #setting choices
+    cost_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
+    cost_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]
+    staff_form.service.choices = [k for k in db_static_staff]
+    staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
+
+    install_form.service.choices = [k for k in db_static_installation]
+
+
+
+    # if temp_calc_for == ['RC']:
+    #     print(temp_calc_for)
+
+    if request.method == 'POST':
+        if request.form.get('StaffCostPlusBtn'):
+            staff_cost_output = [request.form[key] for key in request.form.keys()]
+            # print(staff_cost_output)
+            staff_form.service.data = staff_cost_output[1]
+            staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
+            if temp_calc_for == ['RC']:
+                staff_price_item = staff_price_row.price_reg_inquiry_RC
+                # print(staff_price_item)
+            elif temp_calc_for == ['PRO GIS']:
+                staff_price_item = staff_price_row.price_reg_inquiry_OE
+                # print(staff_price_item)
+            elif temp_calc_for == ['DE TM']:
+                staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
+            # print(int(staff_price_item)*int(staff_cost_output[2]))                                
+            sum_staff_item = int(staff_price_item)*int(staff_cost_output[2])
+            staff_form.rentalmode.data = staff_cost_output[3]
+            staff_form.rentalunits.data = staff_cost_output[2]
+            staff_form.remark.data = staff_cost_output[4]
+            if int(staff_form.rentalunits.data) > 0:
+                AddRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
+            else:
+                flash(f"Rental unit must be greater than zero", category='danger')
+
+        elif request.form.get('StaffCostMinusBtn'): 
+            # print(request.form.get('StaffCostMinusBtn'))    
+            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
+        elif request.form.get('ToolCostPlusBtn'):
+            AddRow(temp_tool_costs)
+        elif request.form.get('ToolCostMinusBtn'):
+            DelRow(temp_tool_costs)        
+        return redirect(url_for('costs_page'))
+    
+    return render_template('costs.html', cost_form=cost_form,
+                                         staff_form=staff_form, 
+                                         install_form=install_form, 
+                                         staff_items=staff_items, 
+                                         tool_items=tool_items,
+                                         project_info_items=project_info_items,
+                                         temp_sum_total=temp_sum_total)
+
+
+
+### User administration
+
+@app.route('/register', methods=['POST', 'GET'])
+def register_page():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user_to_create = User(username=form.username.data,
+                              email_address=form.email_address.data,
+                              password=form.password1.data)
+        db.session.add(user_to_create)
+        db.session.commit()
+        login_user(user_to_create)
+        flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
+        return redirect(url_for('home_page'))
+    if form.errors != {}: #If there are not errors from the validations
+        for err_msg in form.errors.values():
+            flash(f'There was an error with creating a user: {err_msg}', category='danger')
+    return render_template('register.html', form=form)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    RemoveTemporaryItems()
+    form = LoginForm()
+    if form.validate_on_submit():
+        attempted_user = User.query.filter_by(username=form.username.data).first()
+        if attempted_user and attempted_user.check_password_correction(
+            attempted_password=form.password.data):
+            login_user(attempted_user)
+            flash(f'Success! You are logged in as: {attempted_user.username}', category='success')
+            return redirect(url_for('home_page'))
+        else:
+            flash(f'User and/or Password wrong! Try again', category='success')
+
+    return render_template('login.html', form=form)
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout_page():
+    RemoveTemporaryItems()
+    logout_user()
+    flash("You have been logged out!", category='info')
+    return redirect(url_for("home_page"))
+
