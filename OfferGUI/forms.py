@@ -143,5 +143,11 @@ class InstallationToolsCostForm(FlaskForm):
     remark = StringField(label='Remark')
 
 class ManpowerForm(FlaskForm):
-    group_scope_of_work_I = SelectField(u'Group of scope', coerce=str)
-    group_scope_of_work_C = SelectField(u'Group of scope', coerce=str)
+    group_scope_of_work_I = SelectField(u'Group of scope I', coerce=str)
+    group_scope_of_work_C = SelectField(u'Group of scope C', coerce=str)
+    additional_scope      = StringField(u'Additional scope')
+    staff_from_temp       = SelectField(u'staff selector', coerce=str)
+    scopes_from_temp      = SelectField(u'scope selector', coerce=str)
+    date_start            = DateField(label="Start", format='%Y-%m-%d')#, validators=[DataRequired()])
+    date_stop             = DateField(label="Stop", format='%Y-%m-%d')#, validators=[DataRequired()])
+    submit                = SubmitField(label='Refresh page')

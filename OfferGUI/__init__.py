@@ -10,20 +10,13 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from werkzeug.utils import secure_filename
 app = Flask(__name__)
-# app.config.from_object(__name__)
-# file_path = os.path.abspath(os.getcwd())+"\Costs.db"
-# file_path = str("C:\Users\z0025fdz\Costs.db")
-# print(file_path)
-#database
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///Costs.db'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+ file_path
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:/Users/z0025fdz/Costs.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://///ad101.siemens-energy.net/dfs101/File_SE/EMEA/ENERGY_BLN_I&C/02_Site_Planning/shared_DB_OfferCalc.db'
 app.config['SQLALCHEMY_BINDS'] = {
     'shared': 'sqlite://///ad101.siemens-energy.net/dfs101/File_SE/EMEA/ENERGY_BLN_I&C/02_Site_Planning/shared_DB_OfferCalc.db',
-    'local': 'sqlite:///local_DB_OfferCalc.db'
+    'local': 'sqlite:///local_DB_OfferCalc.db',
+    'MOS' : 'sqlite:///local_DB_MOS.db'
 }
-
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS']  = False
 app.config['SECRET_KEY'] = '859e01ebc245b0ae49600efa'
 app.config['UPLOAD_PATH'] = 'uploads'
 

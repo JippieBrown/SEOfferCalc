@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Methodstatement
+{% endblock %}
+
+{% block content %}
+<meta charset="utf-8">
+<!-- Layout and Text control -->
+<style>
+    @media print,
+    screen and (-webkit-min-device-pixel-ratio:0) {
+        body{
+            zoom:100%;
+        }
+        div.printer {
+            margin: 5mm 5mm 5mm 5mm;
+        }
+
+        h1 {
+            page-break-before: always;
+            color: rgb(0, 0, 0);
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            /* font-size:10mm; */
+        }
+
+        h3 {
+            font-size: 8mm;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        td {
+            color: rgb(0, 0, 0);
+            -webkit-print-color-adjust: exact;
+            border: 0.1mm dashed #666666;
+        }
+
+        td.sender {
+            color: rgb(0, 0, 0);
+            -webkit-print-color-adjust: exact;
+            font-size: 4mm;
+        }
+
+        td.receiver {
+            color: rgb(0, 0, 0);
+            -webkit-print-color-adjust: exact;
+            font-size: 4.5mm;
+        }
+
+        table.page_head {
+            page-break-before: always;
+        }
+
+    }
+</style>
+
+
+<!-- Page Start -->
+
+<!-- Logo and Buisness unit -->
+<!-- <table>
+    <td>
+        <div class="logo">
+            <img class="mb-4" src="/static/img/Siemens_Energy_logo.png" width="20%">
+        </div>
+    </td>
+    <td class="text-right" style="width:400px;">
+        <h3>Transmission products</h3>
+    </td>
+</table> -->
+<div class="printer">
+    <!-- Address -->
+    <table class="page_head">
+        <tbody>
+            {% for item in project_info_items %}
+            <tr>
+                <td style="width:400px;">
+                    <div class="logo">
+                        <img class="mb-4" src="/static/img/Siemens_Energy_logo.png" width="40%">
+                    </div>
+                </td>
+                <td colspan="2" class="text-left">
+                    <h3>Transmission products</h3>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size:3mm;">Siemens Energy Global GmbH & Co. KG, Siemensstadt; Nonnendammallee 104; 13629
+                    Berlin; Deutschland</td>
+                <td class="sender">Name</td>
+                <td class="sender">{{ item.editor }}</td>
+            </tr>
+            <tr>
+                <td class="receiver">Siemens Energy Gas and Power GmbH & Co. KG</td>
+                <td class="sender">Department</td>
+                <td class="sender">SE GP T SP PRO DE OEN ICC I&C</td>
+            </tr>
+            <tr>
+                <td class="receiver">{{ item.department }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="receiver">{{ item.first_name }} {{ item.last_name }}</td>
+                <td class="sender">Mobile</td>
+                <td class="sender">+491733106095</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="sender">E-Mail</td>
+                <td class="sender">haukemaier@siemens-energy.com</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="sender">Date</td>
+                <td class="sender">{{ item.inquiry_date }}</td>
+            </tr>
+            <tr>
+                <td class="receiver">91058 Erlangen</td>
+                <td class="sender" style="font-weight: bold;">Project ID</td>
+                <td class="sender" style="font-weight: bold;">{{ item.project_id }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <h3></h3>
+
+</div>
+
+
+
+<!-- 2. page -->
+<!-- <table class="page_head">
+    <tbody>
+        <tr>
+            <td style="width:400px;">
+                <div class="logo">
+                    <img class="mb-4" src="/static/img/Siemens_Energy_logo.png" width="40%">
+                </div>
+            </td>
+            <td class="text-left" style="width:600px;">
+                <h3> </h3>
+            </td>  
+        </tr>
+    </tbody>
+</table> -->
+
+
+{% endblock %}

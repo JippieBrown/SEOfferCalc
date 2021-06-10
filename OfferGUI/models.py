@@ -23,6 +23,7 @@ class User(db.Model, UserMixin):
         return bcrypt.check_password_hash(self.password_hash, attempted_password)
 
 class static_costs_commissioning_tools(db.Model):
+    __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
     service     = db.Column(db.String())
 
@@ -71,6 +72,15 @@ class gantt(db.Model):
     Start      = db.Column(db.String())
     Finish     = db.Column(db.String())
     Resource   = db.Column(db.String())
+
+class temp_planner(db.Model):
+    __bind_key__ = 'local'
+    id                    = db.Column(db.Integer(), primary_key=True)
+    scope                 = db.Column(db.String())    
+    staff                 = db.Column(db.String()) 
+    start                 = db.Column(db.String())
+    stop                  = db.Column(db.String())
+    workdays              = db.Column(db.String())
 
 class temp_group_scope_of_work(db.Model):
     __bind_key__ = 'local'
@@ -253,3 +263,11 @@ class collected_projects(db.Model):
     # tools = SelectField(u'Tools', coerce=str)
     def __repr__(self):
         return f'project_info {self.name}'   
+
+class MOS_dropdown_elements(db.Model):
+    __bind_key__ = 'MOS'
+    id                    = db.Column(db.Integer(), primary_key=True)
+    plant_type            = db.Column(db.String())
+    yes_no                = db.Column(db.String())
+    language              = db.Column(db.String())
+    pdm_type              = db.Column(db.String())

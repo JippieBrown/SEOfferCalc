@@ -5,9 +5,58 @@ Manpower
 {% endblock %}
 
 {% block content %}
-<table class="table table-hover table-dark" style="height: 100px;">
+
+<!-- The following script allows to edit cell content by hidden input boxes -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script type='text/javascript'>
+    $(document).ready(function () {
+
+        // Show Input element
+        $('.edit').click(function () {
+            $('.txtedit').hide();
+            $(this).next('.txtedit').show().focus();
+            $(this).hide();
+        });
+
+        // Save data
+        $(".txtedit").focusout(function () {
+            // console.log('Hallo');
+            // Get edit id, field name and value
+            var id = this.id;
+            var split_id = id.split("_");
+            var field_name = split_id[0];
+            var edit_id = split_id[1];
+            var value = $(this).val();
+
+            // Hide Input element
+            $(this).hide();
+
+            // Hide and Change Text of the container with input elmeent
+            $(this).prev('.edit').show();
+            $(this).prev('.edit').text(value);
+
+            $.ajax({
+                url: '/update_planner',
+                type: 'POST',
+                data: { field: field_name, value: value, id: edit_id },
+                success: function (response) {
+                    if (response == 1) {
+                        console.log('Save successfully');
+                    } else {
+                        console.log("Not saved.");
+                    }
+                }
+            });
+
+        });
+
+    });
+</script>
+
+<!-- PAGE CONTENT -->
+<table class="table table-hover table-secondary sticky-top">
     <thead>
-        <tr style="height: 65px;">
+        <tr>
             {% for item in project_info_items %}
             <th scope="col">Active Project: {{ item.project_name }}</th>
             <th scope="col">GIS: {{ item.plant_type }} with {{ item.number_of_bays }} bays and {{ item.busbar }}-Busbar
@@ -16,6 +65,17 @@ Manpower
             <th scope="col" style="width: 250px;"> </th>
             <th scope="col" style="width: 250px;"> </th>
             <th scope="col">Editor: {{ item.editor }}</th>
+        </tr>
+        <tr>
+            <td>Supervison? {{ item.supervision }} &nbsp; &nbsp;
+                Commissioning? {{ item.commissioning }} &nbsp; &nbsp;
+                Painter? {{ item.protection_class_indoor }} / {{ item.protection_class_outdoor }} &nbsp; &nbsp;</td>
+            <td> HV-Test PD? {{ item.hv_test_equipment }} &nbsp; &nbsp;
+                PSD? {{ item.psd }} &nbsp; &nbsp;
+                ACTAS? {{ item.actas }} &nbsp; &nbsp;
+                Customer training? {{ item.customer_training }} &nbsp; &nbsp;
+            </td>
+            <td></td>
             {% endfor %}
         </tr>
     </thead>
@@ -23,22 +83,46 @@ Manpower
 <br>
 <div class="col-12">
     <div class="row">
-        <form method="POST" class="form-register" style="color:white">
+        <form method="POST" style="color:white">
             <div class="col-10">
-                <h3>Staff</h3>
+                <h3><img src="/static/img/elektriker.png" width="7%"><img src="/static/img/mechaniker.png" width="9%">
+                    Staff</h3>
                 <table class="table table-hover table-dark">
                     <thead>
                         <th class="text-center" style="width:38px">ID</th>
                         <th>{{ staff_form.service(class="form-control") }}</th>
-                        <th><button type="input" style="width:38px" name="StaffCostPlusBtn" value="StaffCostPlusBtn"
-                                class="btn btn-outline-success">+</button></th>
+                        <th><button type="input" style="width:38px;font-weight: bold" name="StaffCostPlusBtn"
+                                value="StaffCostPlusBtn" class="btn btn-outline-success">+</button></th>
                     </thead>
                     <tbody>
                         {% for item in staff_items %}
                         <tr>
                             <td class="text-center" style="width:38px">{{ item.id }}</td>
                             <td class="text-left">{{ item.Service }}</td>
-                            <td><button type="input" style="width:38px" name="StaffCostMinusBtn" value="{{ item.id }}"
+                            <td><button type="input" style="width:38px;font-weight: bold" name="StaffCostMinusBtn"
+                                    value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br /><br />
+            </div>
+            <div class="col-10">
+                <h3><img src="/static/img/to-do.png" width="8%"> Installation </h3>
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <th class="text-center" style="width:38px">ID</th>
+                        <th>{{ manpower_form.group_scope_of_work_I(class="form-control") }}</th>
+                        <th><button type="input" style="width:38px;font-weight: bold" name="InstallationScopePlusBtn"
+                                value="InstallationScopePlusBtn" class="btn btn-outline-success">+</button></th>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_group_scope_of_work_items if item.team == "Supervisor" %}
+                        <tr>
+                            <td class="text-center" style="width:38px">{{ item.id }}</td>
+                            <td class="text-left">{{ item.group_scope_of_work }}</td>
+                            <td><button type="input" style="width:38px;font-weight: bold"
+                                    name="InstallationScopeMinusBtn" value="{{ item.id }}"
                                     class="center btn btn-outline-danger">-</button></td>
                         </tr>
                         {% endfor %}
@@ -47,55 +131,133 @@ Manpower
                 <br /><br />
             </div>
             <div class="col-10">
-                <h3>Installation scopes</h3>
-                    <table class="table table-hover table-dark">
-                        <thead>
-                            <th>{{ manpower_form.group_scope_of_work_I(class="form-control") }}</th>
-                            <th><button type="submit" style="width:38px" name="InstallationScopePlusBtn"
-                                    value="InstallationScopePlusBtn" class="btn btn-outline-success">+</button></th>
-                        </thead>
-                        <tbody>
-                            {% for item in temp_group_scope_of_work_items if item.team == "Supervisor" %}
-                            <tr>
-                                <td class="text-left">{{ item.group_scope_of_work }}</td>
-                                <td><button type="input" style="width:38px" name="InstallationScopeMinusBtn"
-                                        value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <br /><br />
+                <h3><img src="/static/img/to-do.png" width="8%"> Commissioning</h3>
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <th class="text-center" style="width:38px">ID</th>
+                        <th>{{ manpower_form.group_scope_of_work_C(class="form-control") }}</th>
+                        <th><button type="input" style="width:38px;font-weight: bold" name="CommissioningScopePlusBtn"
+                                value="CommissioningScopePlusBtn" class="btn btn-outline-success">+</button></th>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_group_scope_of_work_items if item.team == "Commissioning Engineer" %}
+                        <tr>
+                            <td class="text-center" style="width:38px">{{ item.id }}</td>
+                            <td class="text-left">{{ item.group_scope_of_work }}</td>
+                            <td><button type="input" style="width:38px;font-weight: bold"
+                                    name="CommissioningScopeMinusBtn" value="{{ item.id }}"
+                                    class="center btn btn-outline-danger">-</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br /><br />
             </div>
             <div class="col-10">
-                <h3>Commissioning scopes</h3>
-                    <table class="table table-hover table-dark">
-                        <thead>
-                            <th>{{ manpower_form.group_scope_of_work_C(class="form-control") }}</th>
-                            <th><button type="submit" style="width:38px" name="CommissioningScopePlusBtn"
-                                    value="CommissioningScopePlusBtn" class="btn btn-outline-success">+</button></th>
-                        </thead>
-                        <tbody>
-                            {% for item in temp_group_scope_of_work_items if item.team == "Commissioning Engineer" %}
-                            <tr>
-                                <td class="text-left">{{ item.group_scope_of_work }}</td>
-                                <td><button type="input" style="width:38px" name="CommissioningScopeMinusBtn"
-                                        value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <br /><br />
+                <h3>Additional scopes (todo)</h3>
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <th>{{ manpower_form.additional_scope(class="form-control") }}</th>
+                        <th><button type="input" style="width:38px;font-weight: bold" name="AdditionalScopePlusBtn"
+                                value="AdditionalScopePlusBtn" class="btn btn-outline-success">+</button></th>
+                    </thead>
+                    <tbody>
+                        {% for item in temp_group_scope_of_work_items if item.team == "Commissioning Engineer" %}
+                        <tr>
+                            <td class="text-left"></td>
+                            <td><button type="input" style="width:38px;font-weight: bold" name="AdditionalScopeMinusBtn"
+                                    value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br /><br />
             </div>
         </form>
-        <div class="col-6">
-            <div id="chart" class="chart"></div>
+        <div class="col-8">
+            <form method="POST" style="color:white">
+                <h3><img src="/static/img/kalender.png" width="6%"> Planner</h3>
+                <!-- <button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtn" -->
+                <!-- value="PlannerPlusBtn" class="btn btn-outline-success">+</button> -->
+                <br>
+                <table class="table table-hover table-secondary">
+                    <tbody>
+                        <td><b>Unplanned Scopes:</b>
+                            {% for item in unplanned_scopes%}
+                            {{item}},
+                            {% endfor %}
+                        </td>
+                    </tbody>
+                </table>
+                <table class="table table-hover table-dark">
+                    <thead>
+                        <th>ID</th>
+                        <th>Scope</th>
+                        <th>Staff</th>
+                        <th>Start</th>
+                        <th>Stop</th>
+                        <th>Workdays</th>
+                        <th></th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <!-- <td></td> -->
+                            <!-- <td></td> -->
+                            <!-- <td>2021-06-01</td> -->
+                            <!-- <td>2021-06-02</td> -->
+                            <td>{{ manpower_form.scopes_from_temp(class="form-control") }}</td>
+                            <td>{{ manpower_form.staff_from_temp(class="form-control") }}</td>
+                            <td>{{ manpower_form.date_start(class="form-control", style="width: 200px;") }}</td>
+                            <td>{{ manpower_form.date_stop(class="form-control", style="width: 200px;") }}</td>
+                            <td></td>
+                            <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtn"
+                                    value="PlannerPlusBtn" class="btn btn-outline-success">+</button></td>
+            </form>
+            <form method="POST" action="/update_planner" >
+                </tr>
+                {% for item in temp_planner_items %}
+                <tr>
+                    <td class="text-left">{{ item.id }}</td>
+                    <td class="text-left">
+                        {{ item.scope }}</td>
+                    <!-- <div class='edit'>{{ item.scope }}</div> -->
+                    <!-- <input type='text' class='txtedit' value='{{ item.scope }}' id='scope_{{item.id}}'> -->
+                    <!-- </td> -->
+                    <td class="text-left">{{ item.staff }}</td>
+                    <td class="text-left">
+                        <!-- {{ item.start }}</td> -->
+                        <div class='edit'>{{ item.start }}</div>
+                        <input type='date' onchange="this.form.submit()" class='txtedit form-control'
+                            style="width: 200px;" name='test' value='{{ item.start }}'>
+                    </td>
+                    <td class="text-left">{{ item.stop }}</td>
+                    <td class="text-center">{{ item.workdays }}</td>
+                    <td><button type="input" style="width:38px;font-weight: bold" name="PlannerMinusBtn"
+                            value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
+                <div id="chart" class="chart"></div>
         </div>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script type="text/javascript">
             var graphs = {{ graphJSON | safe}};
             Plotly.plot('chart', graphs, {});
         </script>
+        </form>
     </div>
 </div>
 
+<style>
+    body {
+        background-color: #212121;
+        color: white
+    }
+
+    .txtedit {
+        display: none;
+    }
+</style>
 {% endblock %}

@@ -1,55 +1,20 @@
 from OfferGUI import app, db
 from OfferGUI.models import *
 from OfferGUI.forms import *
-from flask import render_template, redirect, request, url_for, flash, get_flashed_messages
+from flask import render_template, redirect, request, url_for, flash, get_flashed_messages, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime, date
-from OfferGUI.tools import AddRow, DelRow, XmlReader, RemoveTemporaryItems, SelectFieldSetter
+from datetime import datetime, date, timedelta
+from networkdays import networkdays
+from OfferGUI.tools import AddRow, DelRow, XmlReader, RemoveTemporaryItems
 import os
 import xmltodict
-###
 import pandas as pd
 import json
 import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.io as pio
-@app.route('/chart1')
-def chart1():
-    # df = gantt.query.all()
-    df = [dict(Task="Job-1", Start='2017-01', Finish='2017-02', Resource='Complete'),
-          dict(Task="Job-1", Start='2017-02', Finish='2017-03', Resource='Incomplete'),
-          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Not Started'),
-          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Complete'),
-          dict(Task="Job-3", Start='2017-03', Finish='2017-03', Resource='Not Started'),
-          dict(Task="Job-3", Start='2017-04', Finish='2017-04', Resource='Not Started'),
-          dict(Task="Job-3", Start='2017-05', Finish='2017-06', Resource='Not Started'),
-          dict(Task="Job-4", Start='2017-01', Finish='2017-03', Resource='Complete')]
-    # print(df)
-    # df = gantt.query.all()
-    # print(df)
-    colors = {'Not Started': 'rgb(220, 0, 0)',
-            'Incomplete': (1, 0.9, 0.16),
-            'Complete': 'rgb(0, 255, 0)'}
-
-    fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True,
-                        group_tasks=True,showgrid_x=True,showgrid_y=True)
-
-    fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
-                       'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
-                       'font_color':'white',
-                       'width':1000,
-                       'height':400,
-                       'grid_ygap':1,
-                       'grid_columns':1})
-
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return render_template('notdash2.html', graphJSON=graphJSON)
-
-
-
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -109,24 +74,66 @@ def home_page():
                                                    project_id               = project_row.project_id               ,
                                                    editor                   = project_row.editor                   ,
                                                    date_of_editing          = project_row.date_of_editing          )
-                         
             db.session.add(temp_project_infos)
             db.session.commit()
             return redirect(url_for('project_page'))
+        if request.form.get('CreateMethodStatement'):              
+            return redirect(url_for('methodstatement')) 
+    
     return render_template('home.html', home_form=home_form)
+
+@app.route('/methodstatement', methods = ['GET','POST'])
+def methodstatement():
+    project_info_items = temp_project_info.query.all()
+    return render_template('methodstatement.html', 
+                                                   project_info_items=project_info_items)
+
+@app.route("/update_planner",methods=["POST","GET"])
+def update_planner():
+    if request.method == 'POST':
+        if request.form.get('test'):
+            print(request.form)
+            print('LOL geht')
+        
+    return redirect(url_for('manpower_page'))
+    # try:
+    #     conn = mysql.connect()
+    #     cursor = conn.cursor(pymysql.cursors.DictCursor)
+    #     if request.method == 'POST':
+    #         field = request.form['field'] 
+    #         value = request.form['value']
+    #         editid = request.form['id']
+             
+    #         if field == 'username':
+    #            sql = "UPDATE users SET username=%s WHERE id=%s"
+    #         if field == 'name':        
+    #             sql = "UPDATE users SET name=%s WHERE id=%s"
+ 
+    #         data = (value, editid)
+    #         conn = mysql.connect()
+    #         cursor = conn.cursor()
+    #         cursor.execute(sql, data)
+    #         conn.commit()
+    #         success = 1
+    #     return jsonify(success)
+    # except Exception as e:
+    #     print(e)
+    # finally:
+    #     cursor.close() 
+    #     conn.close()
+
 
 @app.route('/uploader', methods = ['POST'])
 def upload_file():
     if request.method == 'POST':
-        f = request.files['file']
-        # print(f.filename)
-        if f.filename != "":
+        try:
+            f = request.files['file']
             f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
             filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
             #call function
             XmlReader(filepath)
             return redirect(url_for('project_page'))
-        else:
+        except:
             flash(f"Please select file!", category='warning')
             return redirect(url_for('home_page'))
 
@@ -383,43 +390,10 @@ def project_page():
     return render_template('project_info.html', form=form, save_form=save_form)
 
 @app.route('/manpower', methods = ['GET', 'POST'])
-
 def manpower_page():
     slt = static_lead_times
     sc = temp_staff_costs
     stat_c_s = static_costs_staff
-    
-
-    df = [dict(Task="Job-1", Start='2017-01', Finish='2017-02', Resource='Complete'),
-          dict(Task="Job-1", Start='2017-02', Finish='2017-03', Resource='Incomplete'),
-          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Not Started'),
-          dict(Task="Job-2", Start='2017-01', Finish='2017-02', Resource='Complete'),
-          dict(Task="Job-3", Start='2017-03', Finish='2017-03', Resource='Not Started'),
-          dict(Task="Job-3", Start='2017-04', Finish='2017-04', Resource='Not Started'),
-          dict(Task="Job-3", Start='2017-05', Finish='2017-06', Resource='Not Started'),
-          dict(Task="Job-4", Start='2017-01', Finish='2017-03', Resource='Complete')]
-    # print(df)
-    # df = gantt.query.all()
-    # print(df)
-    colors = {'Not Started': 'rgb(220, 0, 0)',
-            'Incomplete': (1, 0.9, 0.16),
-            'Complete': 'rgb(0, 255, 0)'}
-
-    fig = ff.create_gantt(df, colors=colors, index_col='Resource', show_colorbar=True,
-                        group_tasks=True,showgrid_x=True,showgrid_y=True)
-
-    fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
-                       'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
-                       'font_color':'white',
-                       'width':1000,
-                       'height':400,
-                       'grid_ygap':1,
-                       'grid_columns':1})
-
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-
-
 
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
@@ -429,6 +403,8 @@ def manpower_page():
     #reading table data from database
     temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
     project_info_items = temp_project_info.query.all()
+    temp_planner_items = temp_planner.query.all()
+    staff_items = temp_staff_costs.query.all()
     db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
                                                    stat_c_s.service).filter(
                                                    stat_c_s.service!="NULL")
@@ -444,29 +420,40 @@ def manpower_page():
                                         temp_group_scope_of_work.group_scope_of_work, 
                                         temp_group_scope_of_work.group_scope_of_work).filter(
                                         temp_group_scope_of_work.group_scope_of_work!="NULL")
-    staff_items = temp_staff_costs.query.all()
+
+    ### Unplanned scopes
+    '''Fill the list missing_scopes by substracting chosen scopes from planned scopes'''                                    
+    unplanned_scopes = [k for k in [i.group_scope_of_work for i in db_temp_group_scope_of_work_items] if 
+                                k not in [j.scope for j in temp_planner_items]]
+    # print(missing_scopes)
+
+
+
+
     #setting choices                                 
     staff_form.service.choices = [k for k in db_static_staff]   
     manpower_form.group_scope_of_work_I.choices = []
     manpower_form.group_scope_of_work_C.choices = []
+    manpower_form.staff_from_temp.choices = [k.Service + " / ID " + str(k.id) for k in staff_items]
+    manpower_form.scopes_from_temp.choices = [k for k in db_temp_group_scope_of_work_items]
     [manpower_form.group_scope_of_work_I.choices.append(k) for k in db_group_scope_I if 
                                                                     k not in manpower_form.group_scope_of_work_I.choices and 
                                                                     k not in db_temp_group_scope_of_work_items]
     [manpower_form.group_scope_of_work_C.choices.append(k) for k in db_group_scope_C if 
                                                                     k not in manpower_form.group_scope_of_work_C.choices and 
                                                                     k not in db_temp_group_scope_of_work_items]
-
+    manpower_form.date_start.data = datetime.today()
+    # print(manpower_form.date_start.data)
+    manpower_form.date_stop.data = datetime.today() + timedelta(days=1)
     if request.method == 'POST':
         ### Staff
         if request.form.get('StaffCostPlusBtn'):
             staff_cost_output = request.form
-            # print(staff_cost_output)
             staff_form.service.data = staff_cost_output['service']
             if 'service' in staff_cost_output:
                 db.session.add(temp_staff_costs(Service = staff_cost_output['service']))
                 db.session.commit()
-                return redirect(url_for('manpower_page'))
-        elif request.form.get('StaffCostMinusBtn'): 
+        if request.form.get('StaffCostMinusBtn'): 
             DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
         ### Installation scopes
         if request.form.get('InstallationScopePlusBtn'):
@@ -475,13 +462,10 @@ def manpower_page():
                 db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_I'],
                                                         team                = "Supervisor"))
                 db.session.commit()
-                return redirect(url_for('manpower_page'))
             else:
                 flash(f"No scopes available!", category='warning')
         if request.form.get('InstallationScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('InstallationScopeMinusBtn')))
-            return redirect(url_for('manpower_page'))
-
         ### Commissioning scopes
         if request.form.get('CommissioningScopePlusBtn'):
             scope_of_work_output = request.form
@@ -489,30 +473,83 @@ def manpower_page():
                 db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_C'],
                                                         team                = "Commissioning Engineer"))
                 db.session.commit()
-                return redirect(url_for('manpower_page'))
+
             else:
                 flash(f"No scopes available!", category='warning')
         if request.form.get('CommissioningScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('CommissioningScopeMinusBtn')))
-            return redirect(url_for('manpower_page'))
+        if request.form.get('PlannerPlusBtn'): 
+            # print(request.form)
+            planner_output = request.form
+            ### calculating workdays. for further infos https://pypi.org/project/python-networkdays/
+            list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
+                                                 datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))
 
-        # print(staff_items)
+            db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
+                                        staff = planner_output['staff_from_temp'],
+                                        start = planner_output['date_start'],
+                                        stop  = planner_output['date_stop'],
+                                        workdays= len(list_workdays.networkdays())))#rep. amount of workdays
+            db.session.commit()
+        if request.form.get('PlannerMinusBtn'):
+            DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
+        if request.form.get('test'):
+            print(request.form)
+            print(request.form['test'])
+            print([k for k in request.form])
+    ### Create Gantt
+    df= [dict(Task=0, Start='', Finish='', Resource='')]
+    
+    [df.append(dict(Task = i.scope,
+                    Resource = i.staff,
+                    Start = i.start,
+                    Finish = i.stop)) for i in temp_planner.query.all()]
+    # if len(temp_planner.query.all())>=1:
+    if len(df)>=2:
+        df = list(filter(lambda i: i['Task'] != 0, df))
+    '''Sorts Planner-items by Start-date and Finish-date'''
+    df = sorted(df, key=lambda k: (k['Start'],k['Finish']))#, reverse=True)
+    # print(df)
+
+    fig = ff.create_gantt(df, 
+                          showgrid_x=True,
+                          showgrid_y=True,
+                          show_colorbar=True,
+                          index_col='Resource',
+                          group_tasks=True)#group_tasks=True,
+
+    fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+                       'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
+                       'font_color':'white',
+                       'font_size': 16,
+                    #    'width':1000,
+                    #    'height':400,
+                       'grid_ygap':1,
+                       'grid_columns':1,
+                    #    'bargap':0.5,
+                    #    'bargroupgap':0.5
+                       })
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    if request.method == 'POST':# and request.form.get('PlannerPlusBtn'):
+        # print(request.form)
+        return redirect(url_for('manpower_page'))
+
+    # print('time: '+ str(manpower_form.date_start.data))
     return render_template('manpower_calc.html', manpower_form=manpower_form,
                                                  staff_form=staff_form,
                                                  staff_items=staff_items, 
                                                  temp_group_scope_of_work_items=temp_group_scope_of_work_items,
+                                                 temp_planner_items=temp_planner_items,
                                                  project_info_items=project_info_items,
-                                                 graphJSON=graphJSON)
+                                                 graphJSON=graphJSON,
+                                                 unplanned_scopes=unplanned_scopes)
 
 @app.route('/costs', methods=['POST', 'GET'])
 def costs_page():
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
        return redirect(url_for('home_page'))  
-    # if len(temp_project_info.query.all()) == 0:
-    #     flash(f"No project selected!", category='info')
-    #     return redirect(url_for('home_page'))  
-    # project_info = 
     cost_form = CostForm()
     staff_form = StaffCostForm()
     install_form = InstallationToolsCostForm()
@@ -545,7 +582,7 @@ def costs_page():
 
     #select items by column name
     temp_calc_for = [k.calc_for for k in project_info_items]
-    temp_sum_total = sum([k.Sum for k in staff_items])
+    temp_sum_total = 1#sum([k.Sum for k in staff_items])
     # print(temp_calc_for)
     # print(temp_sum)
 
@@ -602,8 +639,6 @@ def costs_page():
                                          tool_items=tool_items,
                                          project_info_items=project_info_items,
                                          temp_sum_total=temp_sum_total)
-
-
 
 ### User administration
 
