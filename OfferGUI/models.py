@@ -134,10 +134,11 @@ class temp_project_info(db.Model):
     customer                      = db.Column(db.String())
     date_of_editing               = db.Column(db.String())
     editor                        = db.Column(db.String())
+    mpd_staff                     = db.Column(db.String())
     def __repr__(self):
         return f'project_info {self.name}'   
 
-class temp_staff_costs(db.Model):
+class temp_staff(db.Model):
     __bind_key__ = 'local'
     id              = db.Column(db.Integer(), primary_key=True)
     Service         = db.Column(db.String(length=30), nullable=False, unique=True)
@@ -229,7 +230,8 @@ class collected_projects(db.Model):
     customer                      = db.Column(db.String())
     date_of_editing               = db.Column(db.String())
     editor                        = db.Column(db.String())
-
+    ### Manpower page 
+    mpd_staff                     = db.Column(db.String())
 
 
     # gascomp_empty = StringField(label='Gas compartments (empty)')

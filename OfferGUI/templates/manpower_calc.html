@@ -75,7 +75,9 @@ Manpower
                 ACTAS? {{ item.actas }} &nbsp; &nbsp;
                 Customer training? {{ item.customer_training }} &nbsp; &nbsp;
             </td>
-            <td></td>
+            <td>
+                <form method="POST"><button type="input" style="width:300px;" name="Save"
+                    value="Save" class="btn btn-primary">Save MPD-Data</button></form></td>
             {% endfor %}
         </tr>
     </thead>
@@ -214,7 +216,7 @@ Manpower
                             <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtn"
                                     value="PlannerPlusBtn" class="btn btn-outline-success">+</button></td>
             </form>
-            <form method="POST" action="/update_planner" >
+            <form method="POST">
                 </tr>
                 {% for item in temp_planner_items %}
                 <tr>

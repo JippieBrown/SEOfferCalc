@@ -15,6 +15,8 @@ import plotly
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.io as pio
+from ast import literal_eval
+
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -73,7 +75,10 @@ def home_page():
                                                    customer                 = project_row.customer                 ,
                                                    project_id               = project_row.project_id               ,
                                                    editor                   = project_row.editor                   ,
-                                                   date_of_editing          = project_row.date_of_editing          )
+                                                   date_of_editing          = project_row.date_of_editing          ,
+                                                   mpd_staff                = project_row.mpd_staff) 
+                                                   #literal_eval allows to "unstring" the list in the mpd_staff-cell        
+                                                   
             db.session.add(temp_project_infos)
             db.session.commit()
             return redirect(url_for('project_page'))
@@ -360,11 +365,10 @@ def project_page():
             ### Overwrite existing project
             project_row_name = collected_projects.query.filter_by(project_name=project_output['project_name']).first()
             project_row_project_id= collected_projects.query.filter_by(project_id=project_output['project_id']).first()
-            # print(project_row)
+
 
             if project_row_name != None and project_row_project_id != None:
                 db.session.delete(collected_projects.query.get(project_row_name.id))
-                # db.session.commit()
                 temp_project_info.query.delete()
                 db.session.commit()
                 db.session.add(project_infos)
@@ -392,7 +396,6 @@ def project_page():
 @app.route('/manpower', methods = ['GET', 'POST'])
 def manpower_page():
     slt = static_lead_times
-    sc = temp_staff_costs
     stat_c_s = static_costs_staff
 
     if len(temp_project_info.query.all()) == 0:
@@ -404,7 +407,9 @@ def manpower_page():
     temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
     project_info_items = temp_project_info.query.all()
     temp_planner_items = temp_planner.query.all()
-    staff_items = temp_staff_costs.query.all()
+    staff_items = temp_staff.query.all()
+    # print(staff_items)
+    # staff_items = literal_eval(temp_project_info.query.get(1).mpd_staff)
     db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
                                                    stat_c_s.service).filter(
                                                    stat_c_s.service!="NULL")
@@ -434,7 +439,10 @@ def manpower_page():
     staff_form.service.choices = [k for k in db_static_staff]   
     manpower_form.group_scope_of_work_I.choices = []
     manpower_form.group_scope_of_work_C.choices = []
-    manpower_form.staff_from_temp.choices = [k.Service + " / ID " + str(k.id) for k in staff_items]
+    if temp_project_info.query.get(1).mpd_staff != None:
+        manpower_form.staff_from_temp.choices = literal_eval(temp_project_info.query.get(1).mpd_staff)#[k.Service + " / ID " + str(k.id) for k in staff_items]
+    else: 
+        manpower_form.staff_from_temp.choices = []
     manpower_form.scopes_from_temp.choices = [k for k in db_temp_group_scope_of_work_items]
     [manpower_form.group_scope_of_work_I.choices.append(k) for k in db_group_scope_I if 
                                                                     k not in manpower_form.group_scope_of_work_I.choices and 
@@ -446,15 +454,29 @@ def manpower_page():
     # print(manpower_form.date_start.data)
     manpower_form.date_stop.data = datetime.today() + timedelta(days=1)
     if request.method == 'POST':
+        if request.form.get('Save'):
+            temp_project = temp_project_info.query.get(1)
+            temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in staff_items])
+            search_id_active_collected_project = collected_projects.query.filter_by(project_name=temp_project.project_name).first().id
+            active_collected_projects = collected_projects.query.get(search_id_active_collected_project)
+            active_collected_projects.mpd_staff = str([(k.id,k.Service) for k in staff_items])
+            db.session.commit()
+            # print([k.Service + " / ID " + str(k.id) for k in staff_items])
+            flash(f"Data overwritten in database!", category='success')
         ### Staff
         if request.form.get('StaffCostPlusBtn'):
             staff_cost_output = request.form
             staff_form.service.data = staff_cost_output['service']
             if 'service' in staff_cost_output:
-                db.session.add(temp_staff_costs(Service = staff_cost_output['service']))
+                db.session.add(temp_staff(Service = staff_cost_output['service']))
+                temp_project = temp_project_info.query.get(1)
+                temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in temp_staff.query.all()])
                 db.session.commit()
         if request.form.get('StaffCostMinusBtn'): 
-            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
+            DelRow(temp_staff,int(request.form.get('StaffCostMinusBtn')))
+            temp_project = temp_project_info.query.get(1)
+            temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in temp_staff.query.all()])
+            db.session.commit()
         ### Installation scopes
         if request.form.get('InstallationScopePlusBtn'):
             scope_of_work_output = request.form
@@ -493,10 +515,6 @@ def manpower_page():
             db.session.commit()
         if request.form.get('PlannerMinusBtn'):
             DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
-        if request.form.get('test'):
-            print(request.form)
-            print(request.form['test'])
-            print([k for k in request.form])
     ### Create Gantt
     df= [dict(Task=0, Start='', Finish='', Resource='')]
     
@@ -516,7 +534,7 @@ def manpower_page():
                           showgrid_y=True,
                           show_colorbar=True,
                           index_col='Resource',
-                          group_tasks=True)#group_tasks=True,
+                          group_tasks=False)#group_tasks=True,
 
     fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
                        'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
@@ -553,7 +571,7 @@ def costs_page():
     cost_form = CostForm()
     staff_form = StaffCostForm()
     install_form = InstallationToolsCostForm()
-    sc = temp_staff_costs
+    sc = temp_staff
     stat_c_s = static_costs_staff
     stat_c_it = static_costs_installation_tools
     # class from from models-py
@@ -576,7 +594,7 @@ def costs_page():
                                                            stat_c_it.service!="NULL")  
 
     #reading table data from database
-    staff_items = temp_staff_costs.query.all()
+    staff_items = temp_staff.query.all()
     tool_items = temp_tool_costs.query.all()
     project_info_items = temp_project_info.query.all()
 
@@ -619,13 +637,13 @@ def costs_page():
             staff_form.rentalunits.data = staff_cost_output[2]
             staff_form.remark.data = staff_cost_output[4]
             if int(staff_form.rentalunits.data) > 0:
-                AddRow(temp_staff_costs, staff_cost_output, staff_price_item, sum_staff_item)
+                AddRow(temp_staff, staff_cost_output, staff_price_item, sum_staff_item)
             else:
                 flash(f"Rental unit must be greater than zero", category='danger')
 
         elif request.form.get('StaffCostMinusBtn'): 
             # print(request.form.get('StaffCostMinusBtn'))    
-            DelRow(temp_staff_costs,int(request.form.get('StaffCostMinusBtn')))
+            DelRow(temp_staff,int(request.form.get('StaffCostMinusBtn')))
         elif request.form.get('ToolCostPlusBtn'):
             AddRow(temp_tool_costs)
         elif request.form.get('ToolCostMinusBtn'):
@@ -639,6 +657,8 @@ def costs_page():
                                          tool_items=tool_items,
                                          project_info_items=project_info_items,
                                          temp_sum_total=temp_sum_total)
+
+
 
 ### User administration
 
