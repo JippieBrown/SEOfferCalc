@@ -54,19 +54,30 @@ Manpower
 </script>
 
 <!-- PAGE CONTENT -->
-<table class="table table-hover table-secondary sticky-top">
+<table class="table table-hover table-dark sticky-top">
     <thead>
         <tr>
             {% for item in project_info_items %}
             <th scope="col">Active Project: {{ item.project_name }}</th>
             <th scope="col">GIS: {{ item.plant_type }} with {{ item.number_of_bays }} bays and {{ item.busbar }}-Busbar
             </th>
-            <th scope="col"> </th>
-            <th scope="col" style="width: 250px;"> </th>
-            <th scope="col" style="width: 250px;"> </th>
+            <th scope="col">
+                <form method="POST"><button type="input" style="width:300px;" name="Save" value="Save"
+                        class="btn btn-primary">Save MPD-Data</button></form>
+            </th>
+            <th scope="col" style="width: 250px;">
+
+                <!-- <input type='select' onchange="this.form.submit()" class='form-control' -->
+                            <!-- style="width: 250px;" name='test' value='{{ manpower_form.rental_mode_week(class="form-control", style="width: -->
+                            <!-- 150px;")}}'> -->
+                            <form method="POST">
+                {{ manpower_form.rental_mode_day(class="form-control", style="width: 150px;", onchange="submit()", value="LOL")}}</form>
+            </th>
+            <th scope="col" style="width: 250px;"> {{ manpower_form.rental_mode_week(class="form-control", style="width:
+                150px;")}}</th>
             <th scope="col">Editor: {{ item.editor }}</th>
         </tr>
-        <tr>
+        <tr class="border-bottom border-light">
             <td>Supervison? {{ item.supervision }} &nbsp; &nbsp;
                 Commissioning? {{ item.commissioning }} &nbsp; &nbsp;
                 Painter? {{ item.protection_class_indoor }} / {{ item.protection_class_outdoor }} &nbsp; &nbsp;</td>
@@ -76,10 +87,17 @@ Manpower
                 Customer training? {{ item.customer_training }} &nbsp; &nbsp;
             </td>
             <td>
-                <form method="POST"><button type="input" style="width:300px;" name="Save"
-                    value="Save" class="btn btn-primary">Save MPD-Data</button></form></td>
+            </td>
             {% endfor %}
         </tr>
+        <!-- <tr class="table-secondary" style="height: 5px;"> -->
+            <!-- <th> </th> -->
+            <!-- <th> </th> -->
+            <!-- <th> </th> -->
+            <!-- <th> </th> -->
+            <!-- <th> </th> -->
+            <!-- <th> </th> -->
+        <!-- </tr> -->
     </thead>
 </table>
 <br>
@@ -92,9 +110,10 @@ Manpower
                 <table class="table table-hover table-dark">
                     <thead>
                         <th class="text-center" style="width:38px">ID</th>
-                        <th>{{ staff_form.service(class="form-control") }}</th>
+                        <th title="choose staff member">{{ staff_form.service(class="form-control") }}</th>
                         <th><button type="input" style="width:38px;font-weight: bold" name="StaffCostPlusBtn"
-                                value="StaffCostPlusBtn" class="btn btn-outline-success">+</button></th>
+                                title="add staff member" value="StaffCostPlusBtn"
+                                class="btn btn-outline-success">+</button></th>
                     </thead>
                     <tbody>
                         {% for item in staff_items %}
@@ -102,7 +121,8 @@ Manpower
                             <td class="text-center" style="width:38px">{{ item.id }}</td>
                             <td class="text-left">{{ item.Service }}</td>
                             <td><button type="input" style="width:38px;font-weight: bold" name="StaffCostMinusBtn"
-                                    value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
+                                    title="remove staff member" value="{{ item.id }}"
+                                    class="center btn btn-outline-danger">-</button></td>
                         </tr>
                         {% endfor %}
                     </tbody>

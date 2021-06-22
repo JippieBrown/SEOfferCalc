@@ -151,3 +151,5 @@ class ManpowerForm(FlaskForm):
     date_start            = DateField(label="Start", format='%Y-%m-%d')#, validators=[DataRequired()])
     date_stop             = DateField(label="Stop", format='%Y-%m-%d')#, validators=[DataRequired()])
     submit                = SubmitField(label='Refresh page')
+    rental_mode_day       = SelectField(u'Hours per day', coerce=str)
+    rental_mode_week      = SelectField(u'Days per week', coerce=str)

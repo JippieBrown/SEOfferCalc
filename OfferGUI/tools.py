@@ -126,7 +126,8 @@ def XmlReader(filepath):
 
 def RemoveTemporaryItems():
     temp_project_info.query.delete()
-    # temp_staff.query.delete()
-    temp_tool_costs.query.delete()
+    temp_staff.query.delete()
+    temp_group_scope_of_work.query.delete()
+    temp_planner.query.delete()
     db.session.commit()
     print("temp-tables emptied in local database!")

@@ -27,14 +27,14 @@ def home_page():
     home_form.project.choices = [k for k in db_projects]
     if request.method == 'POST':
         if request.form.get('LoadExistingProject'):
+        ### Clear temp 
             RemoveTemporaryItems()
-            # print("removed!")
+        ### get row in collected projects by select field above 'load'
             req_project_name = [request.form[key] for key in request.form.keys()][1]
-            ### get row in collected projects by select field above 'load'
             project_row = collected_projects.query.filter_by(project_name=req_project_name).first()
             # print(project_row.id)
 
-            ### writing in database
+        ### data from collected projects into temp projects
             temp_project_infos = temp_project_info(first_name               = project_row.first_name               ,
                                                    last_name                = project_row.last_name                ,
                                                    department               = project_row.department               ,
@@ -76,12 +76,49 @@ def home_page():
                                                    project_id               = project_row.project_id               ,
                                                    editor                   = project_row.editor                   ,
                                                    date_of_editing          = project_row.date_of_editing          ,
-                                                   mpd_staff                = project_row.mpd_staff) 
-                                                   #literal_eval allows to "unstring" the list in the mpd_staff-cell        
+                                                   mpd_staff                = project_row.mpd_staff                ,
+                                                   mpd_scope_group          = project_row.mpd_scope_group          ,
+                                                   mpd_scope_team           = project_row.mpd_scope_team           ,
+                                                   mpd_planner_scope        = project_row.mpd_planner_scope        , 
+                                                   mpd_planner_staff        = project_row.mpd_planner_staff        , 
+                                                   mpd_planner_start        = project_row.mpd_planner_start        , 
+                                                   mpd_planner_stop         = project_row.mpd_planner_stop         ,
+                                                   mpd_planner_workdays     = project_row.mpd_planner_workdays     )          
                                                    
             db.session.add(temp_project_infos)
             db.session.commit()
+
+        ### data from collected projects into temp staff
+            if project_row.mpd_staff != None:
+                for k in literal_eval(project_row.mpd_staff):
+                    db.session.add(temp_staff(Service = k))
+                db.session.commit()
+
+        ### data from collected projects into temp group scope of work
+            if project_row.mpd_scope_group != None:
+                for k,l in zip(literal_eval(project_row.mpd_scope_group),literal_eval(project_row.mpd_scope_team)):
+                    db.session.add(temp_group_scope_of_work(group_scope_of_work = k,
+                                                            team = l))
+                db.session.commit()
+
+        ### data from collected projects into temp planner
+            if project_row.mpd_planner_scope != None:
+                for k,l,m,n,o in zip(literal_eval(project_row.mpd_planner_scope),
+                                   literal_eval(project_row.mpd_planner_staff),
+                                   literal_eval(project_row.mpd_planner_start),
+                                   literal_eval(project_row.mpd_planner_stop),
+                                   literal_eval(project_row.mpd_planner_workdays)):
+                    db.session.add(temp_planner(scope = k,
+                                                staff = l,
+                                                start = m,
+                                                stop = n,
+                                                workdays = o))
+                db.session.commit()                
+
+        ### return
             return redirect(url_for('project_page'))
+
+    ### Testing the printer view ----TODO------
         if request.form.get('CreateMethodStatement'):              
             return redirect(url_for('methodstatement')) 
     
@@ -397,19 +434,27 @@ def project_page():
 def manpower_page():
     slt = static_lead_times
     stat_c_s = static_costs_staff
-
+    dde = dropdown_elements
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
        return redirect(url_for('home_page'))
     staff_form = StaffCostForm()
-    manpower_form = ManpowerForm()      
-    #reading table data from database
+    manpower_form = ManpowerForm()
+    save_form = SaveForm()
+ ### Reading table data from database
     temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
     project_info_items = temp_project_info.query.all()
     temp_planner_items = temp_planner.query.all()
     staff_items = temp_staff.query.all()
-    # print(staff_items)
-    # staff_items = literal_eval(temp_project_info.query.get(1).mpd_staff)
+
+    db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
+                                                   dde.rental_mode_day).filter(
+                                                   dde.rental_mode_day!="NULL")
+
+    db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
+                                                   dde.rental_mode_week).filter(
+                                                   dde.rental_mode_week!="NULL") 
+                                                   
     db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
                                                    stat_c_s.service).filter(
                                                    stat_c_s.service!="NULL")
@@ -426,23 +471,20 @@ def manpower_page():
                                         temp_group_scope_of_work.group_scope_of_work).filter(
                                         temp_group_scope_of_work.group_scope_of_work!="NULL")
 
-    ### Unplanned scopes
+
+ ### Unplanned scopes
     '''Fill the list missing_scopes by substracting chosen scopes from planned scopes'''                                    
     unplanned_scopes = [k for k in [i.group_scope_of_work for i in db_temp_group_scope_of_work_items] if 
                                 k not in [j.scope for j in temp_planner_items]]
     # print(missing_scopes)
 
-
-
-
-    #setting choices                                 
+ ### Setting choices   
+    manpower_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
+    manpower_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]                              
     staff_form.service.choices = [k for k in db_static_staff]   
     manpower_form.group_scope_of_work_I.choices = []
     manpower_form.group_scope_of_work_C.choices = []
-    if temp_project_info.query.get(1).mpd_staff != None:
-        manpower_form.staff_from_temp.choices = literal_eval(temp_project_info.query.get(1).mpd_staff)#[k.Service + " / ID " + str(k.id) for k in staff_items]
-    else: 
-        manpower_form.staff_from_temp.choices = []
+    manpower_form.staff_from_temp.choices = [k.Service + " / ID " + str(k.id) for k in staff_items]
     manpower_form.scopes_from_temp.choices = [k for k in db_temp_group_scope_of_work_items]
     [manpower_form.group_scope_of_work_I.choices.append(k) for k in db_group_scope_I if 
                                                                     k not in manpower_form.group_scope_of_work_I.choices and 
@@ -453,17 +495,43 @@ def manpower_page():
     manpower_form.date_start.data = datetime.today()
     # print(manpower_form.date_start.data)
     manpower_form.date_stop.data = datetime.today() + timedelta(days=1)
+
+ ### POST actions
     if request.method == 'POST':
+
+    ### Rental mode
+        if request.form.get('rental_mode_day'):
+            print(request.form)
+        # if save_form.validate_on_submit():    
+        #     print('LOL')
+        
+    ### Save
         if request.form.get('Save'):
             temp_project = temp_project_info.query.get(1)
             temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in staff_items])
+            temp_project.mpd_scope_group = str([k.group_scope_of_work for k in temp_group_scope_of_work_items])
+            temp_project.mpd_scope_team = str([k.team for k in temp_group_scope_of_work_items])
+            temp_project.mpd_planner_scope= str([k.scope for k in temp_planner_items])
+            temp_project.mpd_planner_staff = str([k.staff for k in temp_planner_items])
+            temp_project.mpd_planner_start = str([k.start for k in temp_planner_items])
+            temp_project.mpd_planner_stop = str([k.stop for k in temp_planner_items])
+            temp_project.mpd_planner_workdays = str([k.workdays for k in temp_planner_items])
+
             search_id_active_collected_project = collected_projects.query.filter_by(project_name=temp_project.project_name).first().id
             active_collected_projects = collected_projects.query.get(search_id_active_collected_project)
-            active_collected_projects.mpd_staff = str([(k.id,k.Service) for k in staff_items])
+            active_collected_projects.mpd_staff = str([(k.Service) for k in staff_items])
+            active_collected_projects.mpd_scope_group = str([k.group_scope_of_work for k in temp_group_scope_of_work_items])
+            active_collected_projects.mpd_scope_team = str([k.team for k in temp_group_scope_of_work_items])
+            active_collected_projects.mpd_planner_scope = str([k.scope for k in temp_planner_items])
+            active_collected_projects.mpd_planner_staff = str([k.staff for k in temp_planner_items])
+            active_collected_projects.mpd_planner_start = str([k.start for k in temp_planner_items])
+            active_collected_projects.mpd_planner_stop = str([k.stop for k in temp_planner_items])
+            active_collected_projects.mpd_planner_workdays = str([k.workdays for k in temp_planner_items])            
             db.session.commit()
             # print([k.Service + " / ID " + str(k.id) for k in staff_items])
             flash(f"Data overwritten in database!", category='success')
-        ### Staff
+        
+    ### Staff
         if request.form.get('StaffCostPlusBtn'):
             staff_cost_output = request.form
             staff_form.service.data = staff_cost_output['service']
@@ -477,7 +545,8 @@ def manpower_page():
             temp_project = temp_project_info.query.get(1)
             temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in temp_staff.query.all()])
             db.session.commit()
-        ### Installation scopes
+        
+    ### Installation scopes
         if request.form.get('InstallationScopePlusBtn'):
             scope_of_work_output = request.form
             if 'group_scope_of_work_I' in scope_of_work_output:
@@ -488,7 +557,8 @@ def manpower_page():
                 flash(f"No scopes available!", category='warning')
         if request.form.get('InstallationScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('InstallationScopeMinusBtn')))
-        ### Commissioning scopes
+        
+    ### Commissioning scopes
         if request.form.get('CommissioningScopePlusBtn'):
             scope_of_work_output = request.form
             if 'group_scope_of_work_C' in scope_of_work_output:
@@ -507,15 +577,21 @@ def manpower_page():
             list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
                                                  datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))
 
-            db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
-                                        staff = planner_output['staff_from_temp'],
-                                        start = planner_output['date_start'],
-                                        stop  = planner_output['date_stop'],
-                                        workdays= len(list_workdays.networkdays())))#rep. amount of workdays
-            db.session.commit()
+            if 'staff_from_temp' not in planner_output:
+                flash(f'Choose and add a staff member', category='danger')
+            elif 'scopes_from_temp' not in planner_output:
+                flash(f'Choose and add a scope', category='danger')
+            else:
+                db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
+                                            staff = planner_output['staff_from_temp'],
+                                            start = planner_output['date_start'],
+                                            stop  = planner_output['date_stop'],
+                                            workdays= len(list_workdays.networkdays())))#rep. amount of workdays
+                db.session.commit()
         if request.form.get('PlannerMinusBtn'):
             DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
-    ### Create Gantt
+    
+ ### Create Gantt diagram
     df= [dict(Task=0, Start='', Finish='', Resource='')]
     
     [df.append(dict(Task = i.scope,
@@ -554,6 +630,8 @@ def manpower_page():
         return redirect(url_for('manpower_page'))
 
     # print('time: '+ str(manpower_form.date_start.data))
+
+ ### return-statement
     return render_template('manpower_calc.html', manpower_form=manpower_form,
                                                  staff_form=staff_form,
                                                  staff_items=staff_items, 
@@ -568,95 +646,12 @@ def costs_page():
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
        return redirect(url_for('home_page'))  
-    cost_form = CostForm()
-    staff_form = StaffCostForm()
-    install_form = InstallationToolsCostForm()
-    sc = temp_staff
-    stat_c_s = static_costs_staff
-    stat_c_it = static_costs_installation_tools
-    # class from from models-py
-    dde = dropdown_elements
-    #reading dropdown choices from database
-    db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
-                                                   stat_c_s.service).filter(
-                                                   stat_c_s.service!="NULL")
-    db_static_rentalmode = dde.query.with_entities(dde.rental_mode, 
-                                                   dde.rental_mode).filter(
-                                                   dde.rental_mode!="NULL")
-    db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
-                                                   dde.rental_mode_day).filter(
-                                                   dde.rental_mode_day!="NULL")
-    db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
-                                                   dde.rental_mode_week).filter(
-                                                   dde.rental_mode_week!="NULL")                                                                                                          
-    db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
-                                                           stat_c_it.service).filter(
-                                                           stat_c_it.service!="NULL")  
-
-    #reading table data from database
-    staff_items = temp_staff.query.all()
-    tool_items = temp_tool_costs.query.all()
     project_info_items = temp_project_info.query.all()
-
-    #select items by column name
-    temp_calc_for = [k.calc_for for k in project_info_items]
-    temp_sum_total = 1#sum([k.Sum for k in staff_items])
-    # print(temp_calc_for)
-    # print(temp_sum)
-
-    #setting choices
-    cost_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
-    cost_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]
-    staff_form.service.choices = [k for k in db_static_staff]
-    staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
-
-    install_form.service.choices = [k for k in db_static_installation]
-
-
-
-    # if temp_calc_for == ['RC']:
-    #     print(temp_calc_for)
-
-    if request.method == 'POST':
-        if request.form.get('StaffCostPlusBtn'):
-            staff_cost_output = [request.form[key] for key in request.form.keys()]
-            # print(staff_cost_output)
-            staff_form.service.data = staff_cost_output[1]
-            staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
-            if temp_calc_for == ['RC']:
-                staff_price_item = staff_price_row.price_reg_inquiry_RC
-                # print(staff_price_item)
-            elif temp_calc_for == ['PRO GIS']:
-                staff_price_item = staff_price_row.price_reg_inquiry_OE
-                # print(staff_price_item)
-            elif temp_calc_for == ['DE TM']:
-                staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
-            # print(int(staff_price_item)*int(staff_cost_output[2]))                                
-            sum_staff_item = int(staff_price_item)*int(staff_cost_output[2])
-            staff_form.rentalmode.data = staff_cost_output[3]
-            staff_form.rentalunits.data = staff_cost_output[2]
-            staff_form.remark.data = staff_cost_output[4]
-            if int(staff_form.rentalunits.data) > 0:
-                AddRow(temp_staff, staff_cost_output, staff_price_item, sum_staff_item)
-            else:
-                flash(f"Rental unit must be greater than zero", category='danger')
-
-        elif request.form.get('StaffCostMinusBtn'): 
-            # print(request.form.get('StaffCostMinusBtn'))    
-            DelRow(temp_staff,int(request.form.get('StaffCostMinusBtn')))
-        elif request.form.get('ToolCostPlusBtn'):
-            AddRow(temp_tool_costs)
-        elif request.form.get('ToolCostMinusBtn'):
-            DelRow(temp_tool_costs)        
-        return redirect(url_for('costs_page'))
-    
-    return render_template('costs.html', cost_form=cost_form,
-                                         staff_form=staff_form, 
-                                         install_form=install_form, 
-                                         staff_items=staff_items, 
-                                         tool_items=tool_items,
-                                         project_info_items=project_info_items,
-                                         temp_sum_total=temp_sum_total)
+    temp_planner_items = temp_planner.query.all()
+    print([k.staff.split(" / ")[0] for k in temp_planner_items])
+    staff = [k.staff.split(" / ")[0] for k in temp_planner_items]
+    return render_template('costs.html', project_info_items = project_info_items,
+                                         staff = staff)
 
 
 
@@ -702,3 +697,101 @@ def logout_page():
     flash("You have been logged out!", category='info')
     return redirect(url_for("home_page"))
 
+# @app.route('/costs', methods=['POST', 'GET'])
+# def costs_page():
+#     if len(temp_project_info.query.all()) == 0:
+#        flash(f"No project selected!", category='info')
+#        return redirect(url_for('home_page'))  
+#     cost_form = CostForm()
+#     staff_form = StaffCostForm()
+#     install_form = InstallationToolsCostForm()
+#     sc = temp_staff
+#     stat_c_s = static_costs_staff
+#     stat_c_it = static_costs_installation_tools
+#     # class from from models-py
+#     dde = dropdown_elements
+#     #reading dropdown choices from database
+#     db_temp_staff = temp_planner.query.with_entities(temp_planner.staff, 
+#                                                    temp_planner).filter(
+#                                                    temp_planner!="NULL")
+
+#     db_static_staff = stat_c_s.query.with_entities(stat_c_s.service, 
+#                                                    stat_c_s.service).filter(
+#                                                    stat_c_s.service!="NULL")
+#     db_static_rentalmode = dde.query.with_entities(dde.rental_mode, 
+#                                                    dde.rental_mode).filter(
+#                                                    dde.rental_mode!="NULL")
+#     db_static_rentalmode_day = dde.query.with_entities(dde.rental_mode_day, 
+#                                                    dde.rental_mode_day).filter(
+#                                                    dde.rental_mode_day!="NULL")
+#     db_static_rentalmode_week = dde.query.with_entities(dde.rental_mode_week, 
+#                                                    dde.rental_mode_week).filter(
+#                                                    dde.rental_mode_week!="NULL")                                                                                                          
+#     db_static_installation = stat_c_it.query.with_entities(stat_c_it.service, 
+#                                                            stat_c_it.service).filter(
+#                                                            stat_c_it.service!="NULL")  
+
+#     #reading table data from database
+#     staff_items = temp_staff.query.all()
+#     tool_items = temp_tool_costs.query.all()
+#     project_info_items = temp_project_info.query.all()
+#     temp_planner_items = temp_planner.query.all()
+#     #select items by column name
+#     temp_calc_for = [k.calc_for for k in project_info_items]
+#     temp_sum_total = 1#sum([k.Sum for k in staff_items])
+#     # print(temp_calc_for)
+#     # print(temp_sum)
+
+#     #setting choices
+#     cost_form.rental_mode_day.choices = [k for k in db_static_rentalmode_day]
+#     cost_form.rental_mode_week.choices = [k for k in db_static_rentalmode_week]
+#     staff_form.service.choices = [k for k in db_static_staff]
+#     staff_form.rentalmode.choices = [k for k in db_static_rentalmode]
+
+#     install_form.service.choices = [k for k in db_static_installation]
+
+
+
+#     # if temp_calc_for == ['RC']:
+#     #     print(temp_calc_for)
+
+#     if request.method == 'POST':
+#         if request.form.get('StaffCostPlusBtn'):
+#             staff_cost_output = [request.form[key] for key in request.form.keys()]
+#             # print(staff_cost_output)
+#             staff_form.service.data = staff_cost_output[1]
+#             staff_price_row = stat_c_s.query.filter_by(service=staff_cost_output[1]).first()
+#             if temp_calc_for == ['RC']:
+#                 staff_price_item = staff_price_row.price_reg_inquiry_RC
+#                 # print(staff_price_item)
+#             elif temp_calc_for == ['PRO GIS']:
+#                 staff_price_item = staff_price_row.price_reg_inquiry_OE
+#                 # print(staff_price_item)
+#             elif temp_calc_for == ['DE TM']:
+#                 staff_price_item = staff_price_row.price_reg_inquiry_RC_DE
+#             # print(int(staff_price_item)*int(staff_cost_output[2]))                                
+#             sum_staff_item = int(staff_price_item)*int(staff_cost_output[2])
+#             staff_form.rentalmode.data = staff_cost_output[3]
+#             staff_form.rentalunits.data = staff_cost_output[2]
+#             staff_form.remark.data = staff_cost_output[4]
+#             if int(staff_form.rentalunits.data) > 0:
+#                 AddRow(temp_staff, staff_cost_output, staff_price_item, sum_staff_item)
+#             else:
+#                 flash(f"Rental unit must be greater than zero", category='danger')
+
+#         elif request.form.get('StaffCostMinusBtn'): 
+#             # print(request.form.get('StaffCostMinusBtn'))    
+#             DelRow(temp_staff,int(request.form.get('StaffCostMinusBtn')))
+#         elif request.form.get('ToolCostPlusBtn'):
+#             AddRow(temp_tool_costs)
+#         elif request.form.get('ToolCostMinusBtn'):
+#             DelRow(temp_tool_costs)        
+#         return redirect(url_for('costs_page'))
+    
+#     return render_template('costs.html', cost_form=cost_form,
+#                                          staff_form=staff_form, 
+#                                          install_form=install_form, 
+#                                          staff_items=staff_items, 
+#                                          tool_items=tool_items,
+#                                          project_info_items=project_info_items,
+#                                          temp_sum_total=temp_sum_total)
