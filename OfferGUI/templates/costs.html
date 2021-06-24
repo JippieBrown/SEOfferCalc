@@ -6,6 +6,11 @@ Costs
 
 {% block content %}
 <style>
+    body {
+      background-color: #212121;
+      color: white
+    }
+
     @media screen{
         body{
             zoom:100%;
@@ -38,19 +43,12 @@ Costs
         <th>ID</th>
         <th>Staff</th>
         <th>Rental units</th>
-        <tr>{% for item in staff %}
+        <tr>{% for item in costs_staff %}
             <td></td>
-            <td>{{ item }}</td>
+            <td>{{ item.staff }}</td>
+            <td>{{ item.workdays }}</td>
         </tr>{% endfor %}
     </table>
 </div>
 
-
-
-<style>
-    body {
-      background-color: #212121;
-      color: white
-    }
-  </style>
 {% endblock %}

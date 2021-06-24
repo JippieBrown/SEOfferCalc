@@ -648,10 +648,19 @@ def costs_page():
        return redirect(url_for('home_page'))  
     project_info_items = temp_project_info.query.all()
     temp_planner_items = temp_planner.query.all()
-    print([k.staff.split(" / ")[0] for k in temp_planner_items])
-    staff = [k.staff.split(" / ")[0] for k in temp_planner_items]
+
+    class costs: 
+        def __init__(self, staff, workdays): 
+            self.staff = staff 
+            self.workdays = workdays
+    
+    costs_staff = []
+    [costs_staff.append(costs(k.staff.split(" / ")[0], 
+                              k.workdays)) for k in temp_planner_items if 
+                                           k.staff.split(" / ")[0] not in costs_staff]
+    print([k.staff for k in costs_staff])
     return render_template('costs.html', project_info_items = project_info_items,
-                                         staff = staff)
+                                         costs_staff = costs_staff)
 
 
 
