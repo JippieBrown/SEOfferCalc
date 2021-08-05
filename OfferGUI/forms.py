@@ -150,6 +150,7 @@ class ManpowerForm(FlaskForm):
     scopes_from_temp      = SelectField(u'scope selector', coerce=str)
     date_start            = DateField(label="Start", format='%Y-%m-%d')#, validators=[DataRequired()])
     date_stop             = DateField(label="Stop", format='%Y-%m-%d')#, validators=[DataRequired()])
+    workdays_stop         = StringField(u'Amount of workdays')
     submit                = SubmitField(label='Refresh page')
     rental_mode_day       = SelectField(u'Hours per day', coerce=str)
     rental_mode_week      = SelectField(u'Days per week', coerce=str)

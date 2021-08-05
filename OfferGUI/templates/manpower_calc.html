@@ -5,7 +5,18 @@ Manpower
 {% endblock %}
 
 {% block content %}
+<!-- STYLE -->
+<style>
+    @media screen {
+        td {
+            border: 0.1mm dashed;
+        }
 
+        th {
+            border: 0.1mm dashed;
+        }
+    }
+</style>
 <!-- The following script allows to edit cell content by hidden input boxes -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 <script type='text/javascript'>
@@ -51,6 +62,16 @@ Manpower
         });
 
     });
+
+    /* THIS SCRIPT CARES ABOUT RESCALING THE GANTT-DIAGRAM AFTER CHANGING WINDOW-SIZE*/
+    $(window).bind('resize', function (e) {
+        if (window.RT) clearTimeout(window.RT);
+        window.RT = setTimeout(function () {
+            this.location.reload(false); /* false to get page from cache */
+        }, 100);
+    });
+
+
 </script>
 
 <!-- PAGE CONTENT -->
@@ -68,35 +89,37 @@ Manpower
             <th scope="col" style="width: 250px;">
 
                 <!-- <input type='select' onchange="this.form.submit()" class='form-control' -->
-                            <!-- style="width: 250px;" name='test' value='{{ manpower_form.rental_mode_week(class="form-control", style="width: -->
-                            <!-- 150px;")}}'> -->
-                            <form method="POST">
-                {{ manpower_form.rental_mode_day(class="form-control", style="width: 150px;", onchange="submit()", value="LOL")}}</form>
+                <!-- style="width: 250px;" name='test' value='{{ manpower_form.rental_mode_week(class="form-control", style="width: -->
+                <!-- 150px;")}}'> -->
+                <form method="POST">
+                    {{ manpower_form.rental_mode_day(class="form-control", style="width: 150px;", onchange="submit()",
+                    default="TEST")}}</form>
             </th>
             <th scope="col" style="width: 250px;"> {{ manpower_form.rental_mode_week(class="form-control", style="width:
                 150px;")}}</th>
             <th scope="col">Editor: {{ item.editor }}</th>
         </tr>
         <tr class="border-bottom border-light">
-            <td>Supervison? {{ item.supervision }} &nbsp; &nbsp;
-                Commissioning? {{ item.commissioning }} &nbsp; &nbsp;
-                Painter? {{ item.protection_class_indoor }} / {{ item.protection_class_outdoor }} &nbsp; &nbsp;</td>
-            <td> HV-Test PD? {{ item.hv_test_equipment }} &nbsp; &nbsp;
-                PSD? {{ item.psd }} &nbsp; &nbsp;
-                ACTAS? {{ item.actas }} &nbsp; &nbsp;
-                Customer training? {{ item.customer_training }} &nbsp; &nbsp;
+            <td>Supervison? <i>-{{ item.supervision }}</i> &nbsp; &nbsp;
+                Commissioning? <i>-{{ item.commissioning }}</i> &nbsp; &nbsp;
+                Painter? <i>-{{ item.protection_class_indoor }} / {{ item.protection_class_outdoor }}</i> &nbsp; &nbsp;
+            </td>
+            <td> HV-Test PD? <i>-{{ item.hv_test_equipment }}</i> &nbsp; &nbsp;
+                PSD? <i>-{{ item.psd }}</i> &nbsp; &nbsp;
+                ACTAS? <i>-{{ item.actas }}</i> &nbsp; &nbsp;
+                Customer training? <i>-{{ item.customer_training }}</i> &nbsp; &nbsp;
             </td>
             <td>
             </td>
             {% endfor %}
         </tr>
         <!-- <tr class="table-secondary" style="height: 5px;"> -->
-            <!-- <th> </th> -->
-            <!-- <th> </th> -->
-            <!-- <th> </th> -->
-            <!-- <th> </th> -->
-            <!-- <th> </th> -->
-            <!-- <th> </th> -->
+        <!-- <th> </th> -->
+        <!-- <th> </th> -->
+        <!-- <th> </th> -->
+        <!-- <th> </th> -->
+        <!-- <th> </th> -->
+        <!-- <th> </th> -->
         <!-- </tr> -->
     </thead>
 </table>
@@ -104,6 +127,7 @@ Manpower
 <div class="col-12">
     <div class="row">
         <form method="POST" style="color:white">
+            <!-- Staff -->
             <div class="col-10">
                 <h3><img src="/static/img/elektriker.png" width="7%"><img src="/static/img/mechaniker.png" width="9%">
                     Staff</h3>
@@ -129,6 +153,7 @@ Manpower
                 </table>
                 <br /><br />
             </div>
+            <!-- Installation -->
             <div class="col-10">
                 <h3><img src="/static/img/to-do.png" width="8%"> Installation </h3>
                 <table class="table table-hover table-dark">
@@ -152,6 +177,7 @@ Manpower
                 </table>
                 <br /><br />
             </div>
+            <!-- Commissioning -->
             <div class="col-10">
                 <h3><img src="/static/img/to-do.png" width="8%"> Commissioning</h3>
                 <table class="table table-hover table-dark">
@@ -175,6 +201,7 @@ Manpower
                 </table>
                 <br /><br />
             </div>
+            <!-- Additional scopes -->
             <div class="col-10">
                 <h3>Additional scopes (todo)</h3>
                 <table class="table table-hover table-dark">
@@ -196,11 +223,10 @@ Manpower
                 <br /><br />
             </div>
         </form>
+        <!-- Planner -->
         <div class="col-8">
             <form method="POST" style="color:white">
                 <h3><img src="/static/img/kalender.png" width="6%"> Planner</h3>
-                <!-- <button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtn" -->
-                <!-- value="PlannerPlusBtn" class="btn btn-outline-success">+</button> -->
                 <br>
                 <table class="table table-hover table-secondary">
                     <tbody>
@@ -217,24 +243,22 @@ Manpower
                         <th>Scope</th>
                         <th>Staff</th>
                         <th>Start</th>
-                        <th>Stop</th>
-                        <th>Workdays</th>
+                        <th style="width: 200px;" colspan="2">Stop</th>
+                        <th colspan="2" >Workdays</th>
                         <th></th>
                     </thead>
                     <tbody>
                         <tr>
                             <td></td>
-                            <!-- <td></td> -->
-                            <!-- <td></td> -->
-                            <!-- <td>2021-06-01</td> -->
-                            <!-- <td>2021-06-02</td> -->
                             <td>{{ manpower_form.scopes_from_temp(class="form-control") }}</td>
                             <td>{{ manpower_form.staff_from_temp(class="form-control") }}</td>
-                            <td>{{ manpower_form.date_start(class="form-control", style="width: 200px;") }}</td>
-                            <td>{{ manpower_form.date_stop(class="form-control", style="width: 200px;") }}</td>
-                            <td></td>
-                            <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtn"
-                                    value="PlannerPlusBtn" class="btn btn-outline-success">+</button></td>
+                            <td>{{ manpower_form.date_start(class="form-control")  }}</td>
+                            <td style="width: 200px;">{{ manpower_form.date_stop(class="form-control") }}</td>
+                            <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnDate"
+                                    value="PlannerPlusBtnDate" class="btn btn-outline-success">+</button></td>
+                            <td>{{ manpower_form.workdays_stop(class="form-control")  }}</td>
+                            <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnWorkdays"
+                                value="PlannerPlusBtnWorkdays" class="btn btn-outline-success">+</button></td>
             </form>
             <form method="POST">
                 </tr>
@@ -253,8 +277,8 @@ Manpower
                         <input type='date' onchange="this.form.submit()" class='txtedit form-control'
                             style="width: 200px;" name='test' value='{{ item.start }}'>
                     </td>
-                    <td class="text-left">{{ item.stop }}</td>
-                    <td class="text-center">{{ item.workdays }}</td>
+                    <td style="width: 200px;" colspan="2" class="text-left">{{ item.stop }}</td>
+                    <td class="text-center" colspan="2">{{ item.workdays }}</td>
                     <td><button type="input" style="width:38px;font-weight: bold" name="PlannerMinusBtn"
                             value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
                 </tr>
@@ -263,6 +287,7 @@ Manpower
                 </table>
                 <div id="chart" class="chart"></div>
         </div>
+
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script type="text/javascript">
             var graphs = {{ graphJSON | safe}};

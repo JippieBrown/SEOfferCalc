@@ -80,6 +80,7 @@ class temp_planner(db.Model):
     staff                 = db.Column(db.String()) 
     start                 = db.Column(db.String())
     stop                  = db.Column(db.String())
+    stop_workdays         = db.Column(db.String())
     workdays              = db.Column(db.String())
 
 class temp_group_scope_of_work(db.Model):
@@ -134,6 +135,7 @@ class temp_project_info(db.Model):
     customer                      = db.Column(db.String())
     date_of_editing               = db.Column(db.String())
     editor                        = db.Column(db.String())
+    ### Manpower page
     mpd_staff                     = db.Column(db.String())
     mpd_scope_group               = db.Column(db.String())
     mpd_scope_team                = db.Column(db.String())
@@ -142,6 +144,8 @@ class temp_project_info(db.Model):
     mpd_planner_start             = db.Column(db.String())
     mpd_planner_stop              = db.Column(db.String())
     mpd_planner_workdays          = db.Column(db.String())
+    mpd_worktime_daily            = db.Column(db.String())
+    mpd_worktime_weekly           = db.Column(db.String())
     def __repr__(self):
         return f'project_info {self.name}'   
 
@@ -246,7 +250,11 @@ class collected_projects(db.Model):
     mpd_planner_start             = db.Column(db.String())
     mpd_planner_stop              = db.Column(db.String())
     mpd_planner_workdays          = db.Column(db.String())
+    mpd_worktime_daily            = db.Column(db.String())
+    mpd_worktime_weekly           = db.Column(db.String())
 
+
+    
     # gascomp_empty = StringField(label='Gas compartments (empty)')
     # gascomp_pref = StringField(label='Gas compartments (prefilled)')
     # assembly_indoor = StringField(label='Assembly (indoor)')
