@@ -507,6 +507,7 @@ def manpower_page():
         
     ### Save
         if request.form.get('Save'):
+            print(request.form)
             temp_project = temp_project_info.query.get(1)
             temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in staff_items])
             temp_project.mpd_scope_group = str([k.group_scope_of_work for k in temp_group_scope_of_work_items])
@@ -570,26 +571,6 @@ def manpower_page():
                 flash(f"No scopes available!", category='warning')
         if request.form.get('CommissioningScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('CommissioningScopeMinusBtn')))
-        if request.form.get('PlannerPlusBtn'): 
-            # print(request.form)
-            planner_output = request.form
-            ### calculating workdays. for further infos https://pypi.org/project/python-networkdays/
-            list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
-                                                 datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))
-
-            if 'staff_from_temp' not in planner_output:
-                flash(f'Choose and add a staff member', category='danger')
-            elif 'scopes_from_temp' not in planner_output:
-                flash(f'Choose and add a scope', category='danger')
-            else:
-                db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
-                                            staff = planner_output['staff_from_temp'],
-                                            start = planner_output['date_start'],
-                                            stop  = planner_output['date_stop'],
-                                            workdays= len(list_workdays.networkdays())))#rep. amount of workdays
-                db.session.commit()
-        if request.form.get('PlannerMinusBtn'):
-            DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
 
     ### Planner    
         if request.form.get('PlannerPlusBtnDate'): 
@@ -607,8 +588,10 @@ def manpower_page():
                                             staff = planner_output['staff_from_temp'],
                                             start = planner_output['date_start'],
                                             stop  = planner_output['date_stop'],
+                                            stop_workdays = len(list_workdays.networkdays()),
                                             workdays= len(list_workdays.networkdays())))#rep. amount of workdays
                 db.session.commit()
+            return redirect(url_for('manpower_page'))
         if request.form.get('PlannerPlusBtnWorkdays'): 
             # print(request.form)
             planner_output = request.form
@@ -628,13 +611,17 @@ def manpower_page():
                                             staff = planner_output['staff_from_temp'],
                                             start = datetime.strptime(planner_output['date_start'], '%Y-%m-%d').strftime('%Y-%m-%d'),
                                             stop  = d,
+                                            stop_workdays = planner_output['workdays_stop'],
                                             workdays= planner_output['workdays_stop']#len(list_workdays.networkdays())
                                             #6-DAYWEEK -->   -(len(list_workdays.weekends())/2)
                                             ))
                 db.session.commit()
+            return redirect(url_for('manpower_page'))
+
         if request.form.get('PlannerMinusBtn'):
             DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
-    
+            return redirect(url_for('manpower_page'))
+
  ### Create Gantt diagram
     df= [dict(Task=0, Start='', Finish='', Resource='')]
     
@@ -669,11 +656,6 @@ def manpower_page():
                        })
 
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    if request.method == 'POST':# and request.form.get('PlannerPlusBtn'):
-        # print(request.form)
-        return redirect(url_for('manpower_page'))
-
-    # print('time: '+ str(manpower_form.date_start.data))
 
  ### return-statement
     return render_template('manpower_calc.html', manpower_form=manpower_form,

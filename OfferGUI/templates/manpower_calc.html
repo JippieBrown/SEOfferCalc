@@ -271,11 +271,12 @@ Manpower
                     <!-- <input type='text' class='txtedit' value='{{ item.scope }}' id='scope_{{item.id}}'> -->
                     <!-- </td> -->
                     <td class="text-left">{{ item.staff }}</td>
-                    <td class="text-left">
+                    <td class="text-left">{{ item.start }}
                         <!-- {{ item.start }}</td> -->
-                        <div class='edit'>{{ item.start }}</div>
-                        <input type='date' onchange="this.form.submit()" class='txtedit form-control'
-                            style="width: 200px;" name='test' value='{{ item.start }}'>
+                        <!-- <div></div> -->
+                        <!-- <input type='date' 
+                        onchange="this.form.submit()" class='txtedit form-control'
+                            style="width: 200px;" name='test' value='{{ item.start }}'> -->
                     </td>
                     <td style="width: 200px;" colspan="2" class="text-left">{{ item.stop }}</td>
                     <td class="text-center" colspan="2">{{ item.workdays }}</td>
@@ -287,7 +288,6 @@ Manpower
                 </table>
                 <div id="chart" class="chart"></div>
         </div>
-
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script type="text/javascript">
             var graphs = {{ graphJSON | safe}};

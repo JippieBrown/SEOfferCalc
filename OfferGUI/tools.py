@@ -19,12 +19,13 @@ def AddRow(table, items, unitprice, sum_item):
 def DelRow(table, id_row):
     last_id = id_row#len(table.query.all())
     last_row = table.query.get(last_id)
+    print(last_row)
     if last_id >= 1:
         db.session.delete(last_row)
         db.session.commit()
     else:
         flash(f"Table empty!", category='warning')
-
+    
 def XmlReader(filepath):
     '''
     Reads xml-File by 'filepath'
