@@ -432,15 +432,19 @@ def project_page():
 
 @app.route('/manpower', methods = ['GET', 'POST'])
 def manpower_page():
+ ### Flashes
+    if len(temp_project_info.query.all()) == 0:
+        flash(f"No project selected!", category='info')
+        return redirect(url_for('home_page'))
+
+ ### Setting variables
     slt = static_lead_times
     stat_c_s = static_costs_staff
     dde = dropdown_elements
-    if len(temp_project_info.query.all()) == 0:
-       flash(f"No project selected!", category='info')
-       return redirect(url_for('home_page'))
     staff_form = StaffCostForm()
     manpower_form = ManpowerForm()
     save_form = SaveForm()
+
  ### Reading table data from database
     temp_group_scope_of_work_items = temp_group_scope_of_work.query.all()
     project_info_items = temp_project_info.query.all()
