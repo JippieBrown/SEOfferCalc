@@ -541,12 +541,14 @@ def manpower_page():
                 temp_project = temp_project_info.query.get(1)
                 temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in temp_staff.query.all()])
                 db.session.commit()
+            return redirect(url_for('manpower_page'))
         if request.form.get('StaffCostMinusBtn'): 
             DelRow(temp_staff,int(request.form.get('StaffCostMinusBtn')))
             temp_project = temp_project_info.query.get(1)
             temp_project.mpd_staff = str([(k.Service + " / ID " + str(k.id)) for k in temp_staff.query.all()])
             db.session.commit()
-        
+            return redirect(url_for('manpower_page'))
+
     ### Installation scopes
         if request.form.get('InstallationScopePlusBtn'):
             scope_of_work_output = request.form
@@ -556,9 +558,11 @@ def manpower_page():
                 db.session.commit()
             else:
                 flash(f"No scopes available!", category='warning')
+            return redirect(url_for('manpower_page'))
         if request.form.get('InstallationScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('InstallationScopeMinusBtn')))
-        
+            return redirect(url_for('manpower_page'))
+
     ### Commissioning scopes
         if request.form.get('CommissioningScopePlusBtn'):
             scope_of_work_output = request.form
@@ -566,13 +570,15 @@ def manpower_page():
                 db.session.add(temp_group_scope_of_work(group_scope_of_work = scope_of_work_output['group_scope_of_work_C'],
                                                         team                = "Commissioning Engineer"))
                 db.session.commit()
-
             else:
                 flash(f"No scopes available!", category='warning')
+            return redirect(url_for('manpower_page'))
         if request.form.get('CommissioningScopeMinusBtn'):
             DelRow(temp_group_scope_of_work, int(request.form.get('CommissioningScopeMinusBtn')))
+            return redirect(url_for('manpower_page'))
 
-    ### Planner    
+    ### Planner
+       ### 5-day-week    
         if request.form.get('PlannerPlusBtnDate'): 
             # print(request.form)
             planner_output = request.form
@@ -605,12 +611,19 @@ def manpower_page():
             elif 'scopes_from_temp' not in planner_output:
                 flash(f'Choose and add a scope', category='danger')
             else:
-                d = datetime.strptime(planner_output['date_start'], '%Y-%m-%d') + timedelta(days=int(planner_output['workdays_stop'])-1+len(list_workdays.weekends()))
-                # d.strftime('%Y-%m-%d')
+                #Calculating the stop date by inserting workdays. On 1 workdays the result is forced on the start date
+                if int(planner_output['workdays_stop']) > 0: 
+                    t_delta = timedelta(days=int(planner_output['workdays_stop'])+len(list_workdays.weekends()))
+                else: 
+                    t_delta = 0
+                calc_stop_date = datetime.strptime(planner_output['date_start'], '%Y-%m-%d') + t_delta
+                calc_stop_date = calc_stop_date.strftime('%Y-%m-%d')
+                
+
                 db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
                                             staff = planner_output['staff_from_temp'],
                                             start = datetime.strptime(planner_output['date_start'], '%Y-%m-%d').strftime('%Y-%m-%d'),
-                                            stop  = d,
+                                            stop  = calc_stop_date,
                                             stop_workdays = planner_output['workdays_stop'],
                                             workdays= planner_output['workdays_stop']#len(list_workdays.networkdays())
                                             #6-DAYWEEK -->   -(len(list_workdays.weekends())/2)
@@ -633,7 +646,7 @@ def manpower_page():
     if len(df)>=2:
         df = list(filter(lambda i: i['Task'] != 0, df))
     '''Sorts Planner-items by Start-date and Finish-date'''
-    df = sorted(df, key=lambda k: (k['Start'],k['Finish']))#, reverse=True)
+    df = sorted(df, key=lambda k: (k['Start'],k['Finish']), reverse=True)
     # print(df)
 
     fig = ff.create_gantt(df, 
