@@ -471,7 +471,6 @@ def manpower_page():
                                         temp_group_scope_of_work.group_scope_of_work).filter(
                                         temp_group_scope_of_work.group_scope_of_work!="NULL")
 
-
  ### Unplanned scopes
     '''Fill the list missing_scopes by substracting chosen scopes from planned scopes'''                                    
     unplanned_scopes = [k for k in [i.group_scope_of_work for i in db_temp_group_scope_of_work_items] if 
@@ -578,7 +577,8 @@ def manpower_page():
             return redirect(url_for('manpower_page'))
 
     ### Planner
-       ### 5-day-week    
+       ### 5-day-week TODO 6-day-week
+       ### Plus button by date   
         if request.form.get('PlannerPlusBtnDate'): 
             # print(request.form)
             planner_output = request.form
@@ -598,6 +598,8 @@ def manpower_page():
                                             workdays= len(list_workdays.networkdays())))#rep. amount of workdays
                 db.session.commit()
             return redirect(url_for('manpower_page'))
+
+       ### Plus button by workdays
         if request.form.get('PlannerPlusBtnWorkdays'): 
             # print(request.form)
             planner_output = request.form
@@ -631,24 +633,32 @@ def manpower_page():
                 db.session.commit()
             return redirect(url_for('manpower_page'))
 
+       ### Minus button 
         if request.form.get('PlannerMinusBtn'):
             DelRow(temp_planner, int(request.form.get('PlannerMinusBtn')))
             return redirect(url_for('manpower_page'))
 
- ### Create Gantt diagram
+ ### Gantt diagram
+  ### Create dataframe + filtering and sorting
     df= [dict(Task=0, Start='', Finish='', Resource='')]
     
     [df.append(dict(Task = i.scope,
                     Resource = i.staff,
                     Start = i.start,
-                    Finish = i.stop)) for i in temp_planner.query.all()]
-    # if len(temp_planner.query.all())>=1:
+                    Finish = i.stop)) for i in temp_planner.query.all() if not i.scope == 'Site management']
+
     if len(df)>=2:
         df = list(filter(lambda i: i['Task'] != 0, df))
     '''Sorts Planner-items by Start-date and Finish-date'''
     df = sorted(df, key=lambda k: (k['Start'],k['Finish']), reverse=True)
-    # print(df)
 
+  ### Seperation of Site mangement, what allows to push it to the top of the gantt chartt
+    [df.append(dict(Task = i.scope,
+                        Resource = i.staff,
+                        Start = i.start,
+                        Finish = i.stop)) for i in temp_planner.query.all() if i.scope == 'Site management']
+
+  ### Create Gantt diagram
     fig = ff.create_gantt(df, 
                           showgrid_x=True,
                           showgrid_y=True,
@@ -656,6 +666,7 @@ def manpower_page():
                           index_col='Resource',
                           group_tasks=False)#group_tasks=True,
 
+  ### Gantt diagram settings
     fig.update_layout({'paper_bgcolor': 'rgba(0, 0, 0, 0)',
                        'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
                        'font_color':'white',
@@ -668,6 +679,7 @@ def manpower_page():
                     #    'bargroupgap':0.5
                        })
 
+  ### Create graphJSON
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
  ### return-statement
