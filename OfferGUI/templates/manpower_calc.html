@@ -237,6 +237,7 @@ Manpower
                         </td>
                     </tbody>
                 </table>
+                <!-- Header -->
                 <table class="table table-hover table-dark">
                     <thead>
                         <th>ID</th>
@@ -244,7 +245,7 @@ Manpower
                         <th>Staff</th>
                         <th>Start</th>
                         <th style="width: 200px;" colspan="2">Stop</th>
-                        <th colspan="2" >Workdays</th>
+                        <th colspan="2">Workdays</th>
                         <th></th>
                     </thead>
                     <tbody>
@@ -252,36 +253,39 @@ Manpower
                             <td></td>
                             <td>{{ manpower_form.scopes_from_temp(class="form-control") }}</td>
                             <td>{{ manpower_form.staff_from_temp(class="form-control") }}</td>
-                            <td>{{ manpower_form.date_start(class="form-control")  }}</td>
+                            <td>{{ manpower_form.date_start(class="form-control") }}</td>
                             <td style="width: 200px;">{{ manpower_form.date_stop(class="form-control") }}</td>
                             <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnDate"
                                     value="PlannerPlusBtnDate" class="btn btn-outline-success">+</button></td>
-                            <td>{{ manpower_form.workdays_stop(class="form-control")  }}</td>
+                            <td>{{ manpower_form.workdays_stop(class="form-control") }}</td>
                             <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnWorkdays"
-                                value="PlannerPlusBtnWorkdays" class="btn btn-outline-success">+</button></td>
+                                    value="PlannerPlusBtnWorkdays" class="btn btn-outline-success">+</button></td>
             </form>
-            <form method="POST">
+            <!-- <form method="POST"> -->
                 </tr>
                 {% for item in temp_planner_items %}
                 <tr>
                     <td class="text-left">{{ item.id }}</td>
                     <td class="text-left">
                         {{ item.scope }}</td>
-                    <!-- <div class='edit'>{{ item.scope }}</div> -->
-                    <!-- <input type='text' class='txtedit' value='{{ item.scope }}' id='scope_{{item.id}}'> -->
-                    <!-- </td> -->
                     <td class="text-left">{{ item.staff }}</td>
                     <td class="text-left">{{ item.start }}
-                        <!-- {{ item.start }}</td> -->
-                        <!-- <div></div> -->
-                        <!-- <input type='date' 
-                        onchange="this.form.submit()" class='txtedit form-control'
-                            style="width: 200px;" name='test' value='{{ item.start }}'> -->
                     </td>
                     <td style="width: 200px;" colspan="2" class="text-left">{{ item.stop }}</td>
-                    <td class="text-center" colspan="2">{{ item.workdays }}</td>
+                    <!-- <td class="text-center" colspan="2">{{ item.workdays }}</td> -->
+                    <form method="POST">
+                    <td class="input-center" colspan="2"><input method="POST" type="input" style="width:100px;font-weight: bold" name="PlannerWorkdayAdd-Value"
+                        value="{{ item.workdays }}" class="form-control" onchange="submit()" ></input>
+                    <input hidden="true" name="PlannerWorkdayAdd-ID" value="{{ item.id }}"></input>
+                    </td>
+                    </form>
+                    <form method="POST">
                     <td><button type="input" style="width:38px;font-weight: bold" name="PlannerMinusBtn"
                             value="{{ item.id }}" class="center btn btn-outline-danger">-</button></td>
+                        </form>
+                    <!-- <td><input type="input" style="width:100px;font-weight: bold" name="PlannerWorkdayAdd"
+                            value="{{ item.id }}" class="form-control" ></input></td> -->
+                    <!-- <td>{{ manpower_form.workdays_add(class="form-control", onchange="submit()") }}</td> -->
                 </tr>
                 {% endfor %}
                 </tbody>
@@ -290,10 +294,10 @@ Manpower
         </div>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script type="text/javascript">
-            var graphs = {{ graphJSON | safe}};
+            var graphs = {{ graphJSON | safe }};
             Plotly.plot('chart', graphs, {});
         </script>
-        </form>
+        <!-- </form> -->
     </div>
 </div>
 

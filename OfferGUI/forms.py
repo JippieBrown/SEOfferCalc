@@ -154,3 +154,4 @@ class ManpowerForm(FlaskForm):
     submit                = SubmitField(label='Refresh page')
     rental_mode_day       = SelectField(u'Hours per day', coerce=str)
     rental_mode_week      = SelectField(u'Days per week', coerce=str)
+    workdays_add          = StringField(u'Adding workdays')

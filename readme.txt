@@ -10,7 +10,7 @@ run python
 upgrade pip
 	py -m pip install --upgrade pip
 install requirements
-	py -m pip install flask flask_sqlalchemy flask_bcrypt flask_login flask_wtf email_validator xmltodict pandas plotly python-networkdays
+	py -m pip install flask flask_sqlalchemy flask_bcrypt flask_login flask_wtf email_validator xmltodict pandas plotly python-networkdays workdays
 	py -m pip install -r requirements.txt
 DB aktivieren
 	python
