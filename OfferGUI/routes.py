@@ -587,8 +587,9 @@ def manpower_page():
             # print(request.form)
             planner_output = request.form
             ### calculating workdays. for further infos https://pypi.org/project/python-networkdays/
-            list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
-                                                 datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))
+            calc_networkdays = workdays.networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'), datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))#-1)
+            # list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
+            #                                      datetime.strptime(planner_output['date_stop'], '%Y-%m-%d'))
             if 'staff_from_temp' not in planner_output:
                 flash(f'Choose and add a staff member', category='danger')
             elif 'scopes_from_temp' not in planner_output:
@@ -598,8 +599,8 @@ def manpower_page():
                                             staff = planner_output['staff_from_temp'],
                                             start = planner_output['date_start'],
                                             stop  = planner_output['date_stop'],
-                                            stop_workdays = len(list_workdays.networkdays()),
-                                            workdays= len(list_workdays.networkdays())))#rep. amount of workdays
+                                            stop_workdays = calc_networkdays,#list_workdays.networkdays()),
+                                            workdays= calc_networkdays))#list_workdays.networkdays())))#rep. amount of workdays
                 db.session.commit()
             return redirect(url_for('manpower_page'))
 
@@ -607,29 +608,17 @@ def manpower_page():
         if request.form.get('PlannerPlusBtnWorkdays'): 
             # print(request.form)
             planner_output = request.form
-            ### calculating workdays. for further infos https://pypi.org/project/python-networkdays/
-            list_workdays = networkdays.Networkdays(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'),
-                                                 datetime.strptime(planner_output['date_start'], '%Y-%m-%d') + timedelta(days=int(planner_output['workdays_stop'])))
-            list_weekends = list_workdays.weekends()
-            # print(len(list_weekends))
+            ### calculating workdays. for further infos https://pypi.org/project/workdays/
+            dateby_workdays = workdays.workday(datetime.strptime(planner_output['date_start'], '%Y-%m-%d'), int(planner_output['workdays_stop']))#-1)
             if 'staff_from_temp' not in planner_output:
                 flash(f'Choose and add a staff member', category='danger')
             elif 'scopes_from_temp' not in planner_output:
                 flash(f'Choose and add a scope', category='danger')
             else:
-                #Calculating the stop date by inserting workdays. On 1 workdays the result is forced on the start date
-                if int(planner_output['workdays_stop']) > 0: 
-                    t_delta = timedelta(days=int(planner_output['workdays_stop'])+len(list_workdays.weekends()))
-                else: 
-                    t_delta = 0
-                calc_stop_date = datetime.strptime(planner_output['date_start'], '%Y-%m-%d') + t_delta
-                calc_stop_date = calc_stop_date.strftime('%Y-%m-%d')
-                
-
                 db.session.add(temp_planner(scope = planner_output['scopes_from_temp'],
                                             staff = planner_output['staff_from_temp'],
                                             start = datetime.strptime(planner_output['date_start'], '%Y-%m-%d').strftime('%Y-%m-%d'),
-                                            stop  = calc_stop_date,
+                                            stop  = dateby_workdays.strftime('%Y-%m-%d'),
                                             stop_workdays = planner_output['workdays_stop'],
                                             workdays= planner_output['workdays_stop']#len(list_workdays.networkdays())
                                             #6-DAYWEEK -->   -(len(list_workdays.weekends())/2)
@@ -642,24 +631,9 @@ def manpower_page():
             # print(request.form)
             planner_tb_output = request.form
             temp_planner_row = temp_planner.query.filter_by(id=planner_tb_output['PlannerWorkdayAdd-ID']).first()
-
             ### calculating workdays. for further infos https://pypi.org/project/workdays/
-            workdays_test = workdays.workday(datetime.strptime(temp_planner_row.start, '%Y-%m-%d'),int(planner_tb_output['PlannerWorkdayAdd-Value']))
-            print(workdays_test)
-            list_workdays = networkdays.Networkdays(datetime.strptime(temp_planner_row.start, '%Y-%m-%d'),
-                                                 datetime.strptime(temp_planner_row.start, '%Y-%m-%d') + timedelta(days=int(planner_tb_output['PlannerWorkdayAdd-Value'])))
-            list_weekends = list_workdays.weekends()
-            jobschedule = networkdays.JobSchedule(int(planner_tb_output['PlannerWorkdayAdd-Value']), 1, datetime.strptime(temp_planner_row.start, '%Y-%m-%d'), networkdays=None)
-            # print(list(jobschedule.days()))
-            # print(jobschedule.total_days)
-            #Calculating the stop date by inserting workdays. On 1 workdays the result is forced on the start date
-            if int(planner_tb_output['PlannerWorkdayAdd-Value']) > 0: 
-                t_delta = 1#timedelta(days=jobschedule.total_days)#timedelta(days=int(planner_tb_output['PlannerWorkdayAdd-Value'])+len(list_workdays.weekends()))
-            else: 
-                t_delta = 0
-            calc_stop_date = workdays_test#datetime.datetime(workdays_test)#temp_planner_row.start, '%Y-%m-%d') #+ t_delta
-            calc_stop_date = calc_stop_date.strftime('%Y-%m-%d')
-            temp_planner_row.stop = calc_stop_date
+            dateby_workdays = workdays.workday(datetime.strptime(temp_planner_row.start, '%Y-%m-%d'), int(planner_tb_output['PlannerWorkdayAdd-Value']))#-1)
+            temp_planner_row.stop = dateby_workdays.strftime('%Y-%m-%d')
             temp_planner_row.stop_workdays = planner_tb_output['PlannerWorkdayAdd-Value']
             temp_planner_row.workdays = planner_tb_output['PlannerWorkdayAdd-Value']     
             db.session.commit()
@@ -703,9 +677,11 @@ def manpower_page():
                        'plot_bgcolor':'rgba(52,58,64,55)',#rgba(255,255,255,100)',#
                        'font_color':'white',
                        'font_size': 16,
-                    #    'width':1000,
-                    #    'height':400,
-                       'grid_ygap':1,
+                       'xaxis':dict(title='Days', tickformat="%d", tickmode = 'linear', dtick=86400000,rangebreaks=[dict(bounds=["sat", "mon"])]),
+                    #    'xaxis2':go.XAxis(),
+                    #    'xaxis2':dict(title='Days', tickformat="%d", tickmode = 'linear', dtick=86400000,rangebreaks=[dict(bounds=["sat", "mon"])], side='top'),
+                    #    'xaxis':dict(title='CW', tickformat="%V", dtick=86400000*7, tickmode = 'linear', tickson="boundaries",rangebreaks=[dict(bounds=["sat", "mon"])]),#%d-%m604800000
+                       'grid_ygap':1, 
                        'grid_columns':1,
                     #    'bargap':0.5,
                     #    'bargroupgap':0.5
