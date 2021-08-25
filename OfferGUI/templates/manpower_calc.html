@@ -7,7 +7,7 @@ Manpower
 {% block content %}
 <!-- STYLE -->
 <style>
-    @media screen {
+    /* @media screen {
         td {
             border: 0.1mm dashed;
         }
@@ -15,7 +15,7 @@ Manpower
         th {
             border: 0.1mm dashed;
         }
-    }
+    } */
 </style>
 <!-- The following script allows to edit cell content by hidden input boxes -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
@@ -245,7 +245,7 @@ Manpower
                         <th>Staff</th>
                         <th>Start</th>
                         <th style="width: 200px;" colspan="2">Stop</th>
-                        <th colspan="2">Workdays</th>
+                        <th style="width: 200px;" colspan="2">Workdays</th>
                         <th></th>
                     </thead>
                     <tbody>
@@ -257,8 +257,8 @@ Manpower
                             <td style="width: 200px;">{{ manpower_form.date_stop(class="form-control") }}</td>
                             <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnDate"
                                     value="PlannerPlusBtnDate" class="btn btn-outline-success">+</button></td>
-                            <td>{{ manpower_form.workdays_stop(class="form-control") }}</td>
-                            <td><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnWorkdays"
+                            <td style="width: 120px;">{{ manpower_form.workdays_stop(class="form-control") }}</td>
+                            <td style="width: 100px;"><button type="input" style="width:38px;font-weight: bold" name="PlannerPlusBtnWorkdays"
                                     value="PlannerPlusBtnWorkdays" class="btn btn-outline-success">+</button></td>
             </form>
             <!-- <form method="POST"> -->

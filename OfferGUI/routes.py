@@ -17,6 +17,42 @@ import plotly.figure_factory as ff
 import plotly.io as pio
 from ast import literal_eval
 import workdays as workdays
+###
+# from vb2py.vbfunctions import *
+# from vb2py.vbdebug import *
+###
+def LookupByGIDorEmail(mycell):
+    ADS_SCOPE_SUBTREE = 2
+    Fields = 'sAMAccountName,otherPager,c,Manager,siemens-costLocationUnit,siemens-costLocation,mobile,physicalDeliveryOfficeName,msDS-PhoneticFirstName,sn,Title,Department,siemens-gid,mail'
+    query1 = 'SELECT ' + Fields + ' ' + 'FROM \'LDAP://ad101.siemens-energy.net:3268/DC=ad101,DC=siemens-energy,DC=net\' WHERE '
+    # mycell = 'haukemaier@siemens-energy.com'
+    Selector = 'mail=\'' + mycell.Value + '\''
+    # setup connection and command
+    conn = CreateObject('ADODB.Connection')
+    conn.Provider = 'ADSDSOObject'
+    conn.Open('ADs Provider')
+    cmd = CreateObject('ADODB.Command')
+    cmd.ActiveConnection = conn
+    q2 = query1 + Selector
+    cmd.CommandText = q2
+    cmd.Properties['SearchScope'] = ADS_SCOPE_SUBTREE
+    cmd.Properties['Cache Results'] = True
+    #   ActiveSheet.Range(Cells(i, 0), Cells(i, 13)).Clear
+    for j in vbForRange(2, 13):
+        Cells(i, j + 1).Clear()
+    Cells[i, 'C'].Value = 'NOT FOUND'
+    # execute query and clear release the cmd object
+    rs = cmd.Execute
+    cmd = None
+    # VB2PY (UntranslatedCode) On Error Resume Next
+    # Fill in the relevant fields for the user
+    rs.MoveFirst()
+    print(rs.Fields)
+    # while not (( rs.EOF or rs.BOF )):
+    #     for j in vbForRange(0, 13):
+    #         field = rs.Fields(j)
+    #         Cells[i, j + 1].Value = field
+    #     rs.MoveNext()
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -702,6 +738,7 @@ def manpower_page():
 
 @app.route('/costs', methods=['POST', 'GET'])
 def costs_page():
+    LookupByGIDorEmail('haukemaier@siemens-energy.com')
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
        return redirect(url_for('home_page'))  
@@ -762,3 +799,57 @@ def logout_page():
     logout_user()
     flash("You have been logged out!", category='info')
     return redirect(url_for("home_page"))
+
+
+
+# def LookupByGIDorEmail():
+#     ADS_SCOPE_SUBTREE = 2
+#     # William Middleton - no idea who wrote the original code here, sorry.  This is optimized so only one sub is needed.
+#     # Lookup some relevant user data and paste into excel based on either gid or email
+#     # version 1.2 released 29.07.21
+#     # v1.1 - support lookups based on Siemens GID when it is different from current sAMAccountName
+#     # v1.2 - place a NOT FOUND message in the users First Name, when nothing turns up
+#     # setup the desired fields
+#     Fields = 'sAMAccountName,otherPager,c,Manager,siemens-costLocationUnit,siemens-costLocation,mobile,physicalDeliveryOfficeName,msDS-PhoneticFirstName,sn,Title,Department,siemens-gid,mail'
+#     query1 = 'SELECT ' + Fields + ' ' + 'FROM \'LDAP://ad101.siemens-energy.net:3268/DC=ad101,DC=siemens-energy,DC=net\' WHERE '
+#     # Rows.count is typically 600
+#     for i in vbForRange(3, ActiveSheet.UsedRange.Rows.Count):
+#         # determine if the user has provided gid or email
+#         mycell = Cells(i, 'A')
+#         if mycell.Value == '':
+#             mycell = Cells(i, 'B')
+#             if mycell.Value == '':
+#                 MsgBox('Finished with ' + i - 3 + ' users ')
+#                 # Do some cleanup
+#                 conn.Close()
+#                 rs = None
+#                 conn = None
+#                 return
+#             Selector = 'sAMAccountName=\'' + mycell.Value + '\' OR siemens-gid=\'' + mycell.Value + '\''
+#         else:
+#             Selector = 'mail=\'' + mycell.Value + '\''
+#         # setup connection and command
+#         conn = CreateObject('ADODB.Connection')
+#         conn.Provider = 'ADSDSOObject'
+#         conn.Open('ADs Provider')
+#         cmd = CreateObject('ADODB.Command')
+#         cmd.ActiveConnection = conn
+#         q2 = query1 + Selector
+#         cmd.CommandText = q2
+#         cmd.Properties['SearchScope'] = ADS_SCOPE_SUBTREE
+#         cmd.Properties['Cache Results'] = True
+#         #   ActiveSheet.Range(Cells(i, 0), Cells(i, 13)).Clear
+#         for j in vbForRange(2, 13):
+#             Cells(i, j + 1).Clear()
+#         Cells[i, 'C'].Value = 'NOT FOUND'
+#         # execute query and clear release the cmd object
+#         rs = cmd.Execute
+#         cmd = None
+#         # VB2PY (UntranslatedCode) On Error Resume Next
+#         # Fill in the relevant fields for the user
+#         rs.MoveFirst()
+#         while not (( rs.EOF or rs.BOF )):
+#             for j in vbForRange(0, 13):
+#                 field = rs.Fields(j)
+#                 Cells[i, j + 1].Value = field
+#             rs.MoveNext()
