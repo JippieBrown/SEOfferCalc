@@ -37,7 +37,17 @@ def XmlReader(filepath):
     with open(filepath) as fd:
             doc = xmltodict.parse(fd.read().encode("cp1252"))
     item = doc['form1']
-    if 'V01.0920' in filepath:
+    if 'V01.0419' in filepath:
+        ### TODO ['Block1']['Inst_personnel_2']  -->                
+        #        ['Block3']['Kran_2']            -->   Yes/No     
+        #        ['Block3']['Gerueste_2']        -->   Yes/No         
+        #        ['Block3]['Buero_2']            -->   Yes/No     
+        #        ['Block5']['PSD_4']             -->   Anzahl Bays    
+        #        ['Block5']['ACTAS']             -->   Anzahl Bays       
+        #        ['Block5']['Train']             -->   Anzahl Tage     
+        #        ['Block6']['Kg']                -->    
+        # 
+         
         read_xml = temp_project_info(first_name               = item['Vorname'],
                                     last_name                = item['Nachname'],
                                     department               = item['Abteilung'],

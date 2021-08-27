@@ -17,42 +17,7 @@ import plotly.figure_factory as ff
 import plotly.io as pio
 from ast import literal_eval
 import workdays as workdays
-###
-# from vb2py.vbfunctions import *
-# from vb2py.vbdebug import *
-###
-def LookupByGIDorEmail(mycell):
-    ADS_SCOPE_SUBTREE = 2
-    Fields = 'sAMAccountName,otherPager,c,Manager,siemens-costLocationUnit,siemens-costLocation,mobile,physicalDeliveryOfficeName,msDS-PhoneticFirstName,sn,Title,Department,siemens-gid,mail'
-    query1 = 'SELECT ' + Fields + ' ' + 'FROM \'LDAP://ad101.siemens-energy.net:3268/DC=ad101,DC=siemens-energy,DC=net\' WHERE '
-    # mycell = 'haukemaier@siemens-energy.com'
-    Selector = 'mail=\'' + mycell.Value + '\''
-    # setup connection and command
-    conn = CreateObject('ADODB.Connection')
-    conn.Provider = 'ADSDSOObject'
-    conn.Open('ADs Provider')
-    cmd = CreateObject('ADODB.Command')
-    cmd.ActiveConnection = conn
-    q2 = query1 + Selector
-    cmd.CommandText = q2
-    cmd.Properties['SearchScope'] = ADS_SCOPE_SUBTREE
-    cmd.Properties['Cache Results'] = True
-    #   ActiveSheet.Range(Cells(i, 0), Cells(i, 13)).Clear
-    for j in vbForRange(2, 13):
-        Cells(i, j + 1).Clear()
-    Cells[i, 'C'].Value = 'NOT FOUND'
-    # execute query and clear release the cmd object
-    rs = cmd.Execute
-    cmd = None
-    # VB2PY (UntranslatedCode) On Error Resume Next
-    # Fill in the relevant fields for the user
-    rs.MoveFirst()
-    print(rs.Fields)
-    # while not (( rs.EOF or rs.BOF )):
-    #     for j in vbForRange(0, 13):
-    #         field = rs.Fields(j)
-    #         Cells[i, j + 1].Value = field
-    #     rs.MoveNext()
+import functools
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
@@ -166,41 +131,6 @@ def methodstatement():
     return render_template('methodstatement.html', 
                                                    project_info_items=project_info_items)
 
-@app.route("/update_planner",methods=["POST","GET"])
-def update_planner():
-    if request.method == 'POST':
-        if request.form.get('test'):
-            print(request.form)
-            print('LOL geht')
-        
-    return redirect(url_for('manpower_page'))
-    # try:
-    #     conn = mysql.connect()
-    #     cursor = conn.cursor(pymysql.cursors.DictCursor)
-    #     if request.method == 'POST':
-    #         field = request.form['field'] 
-    #         value = request.form['value']
-    #         editid = request.form['id']
-             
-    #         if field == 'username':
-    #            sql = "UPDATE users SET username=%s WHERE id=%s"
-    #         if field == 'name':        
-    #             sql = "UPDATE users SET name=%s WHERE id=%s"
- 
-    #         data = (value, editid)
-    #         conn = mysql.connect()
-    #         cursor = conn.cursor()
-    #         cursor.execute(sql, data)
-    #         conn.commit()
-    #         success = 1
-    #     return jsonify(success)
-    # except Exception as e:
-    #     print(e)
-    # finally:
-    #     cursor.close() 
-    #     conn.close()
-
-
 @app.route('/uploader', methods = ['POST'])
 def upload_file():
     if request.method == 'POST':
@@ -208,7 +138,7 @@ def upload_file():
             f = request.files['file']
             f.save(os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename)))
             filepath = os.path.join(app.config['UPLOAD_PATH'],secure_filename(f.filename))
-            #call function
+            # call function in tools.py
             XmlReader(filepath)
             return redirect(url_for('project_page'))
         except:
@@ -738,27 +668,72 @@ def manpower_page():
 
 @app.route('/costs', methods=['POST', 'GET'])
 def costs_page():
-    LookupByGIDorEmail('haukemaier@siemens-energy.com')
+ ### Flashes
     if len(temp_project_info.query.all()) == 0:
        flash(f"No project selected!", category='info')
-       return redirect(url_for('home_page'))  
-    project_info_items = temp_project_info.query.all()
+       return redirect(url_for('home_page'))
+
+ ### Setting variables  
+    costs_staff = []
+    costs_staff_check = []
+    InstToolsForm = InstallationToolsCostForm()
+    static_tools = static_costs_installation_tools
+
+ ### Reading table data from database
+    project_info = temp_project_info.query.get(1)
     temp_planner_items = temp_planner.query.all()
+    stat_costs_staff = static_costs_staff.query.all()
+    # if request.method == 'GET':
+    db_tools = static_tools.query.with_entities(static_tools.tool, static_tools.tool).filter(static_tools.tool!="NULL")#static_costs_installation_tools.query.all()
+
+ ### Setting choices
+    InstToolsForm.tool.choices      = db_tools#[k for k in db_tools]
+    # print(InstToolsForm.tool)
+
+    
 
     class costs: 
-        def __init__(self, staff, workdays): 
+        def __init__(self, staff, workdays, price_per_day): 
             self.staff = staff 
             self.workdays = workdays
-    
-    costs_staff = []
-    [costs_staff.append(costs(k.staff.split(" / ")[0], 
-                              k.workdays)) for k in temp_planner_items if 
-                                           k.staff.split(" / ")[0] not in costs_staff]
-    print([k.staff for k in costs_staff])
-    return render_template('costs.html', project_info_items = project_info_items,
-                                         costs_staff = costs_staff)
+            self.price_per_day = price_per_day
+            self.total = int(workdays) * float(price_per_day)
 
-### User administration
+ ### Table personal costs
+  ### Create inital list of objects
+    ''' 
+    Description:
+
+     For the class:
+     costs(k.staff.split(" / ")[0],functools.reduce(lambda x, y: int(x)+int(y), [j.workdays for j in temp_planner_items if k.staff==j.staff])
+       The part:
+       k.staff.split(" / ")[0] 
+           --> Takes an element from the planner staff and split up the text part (example:Commissioning Engineer / ID 1 --> Commissioning Engineer)
+       The part:
+       functools.reduce(lambda x, y: int(x)+int(y), [j.workdays for j in temp_planner_items if k.staff==j.staff])
+           --> Sum of workdays, where it the staff element in the inner == outer loop
+    ''' 
+    if project_info.calc_for == 'RC':
+        [costs_staff.append(costs(k.staff.split(" / ")[0],
+                                functools.reduce(lambda x, y: int(x)+int(y), [j.workdays for j in temp_planner_items if k.staff==j.staff]),
+                                [i.price_rc for i in stat_costs_staff if k.staff.split(" / ")[0]==i.service][0]
+                                )) for k in temp_planner_items]
+    ####TODO#### PRO GIS and other dropdown elements need to be updated
+    elif project_info.calc_for == 'PRO GIS': 
+        [costs_staff.append(costs(k.staff.split(" / ")[0],
+                                functools.reduce(lambda x, y: int(x)+int(y), [j.workdays for j in temp_planner_items if k.staff==j.staff]),
+                                [i.price_de for i in stat_costs_staff if k.staff.split(" / ")[0]==i.service][0]
+                                )) for k in temp_planner_items]
+  ### Remove duplicates
+    ''' The list costs_staff will be costs_staff_check '''
+    [costs_staff_check.append(item) for item in costs_staff if item.staff not in [j.staff for j in costs_staff_check]]
+
+ ### return-statement
+    return render_template('costs.html', project_info = project_info,
+                                         costs_staff = costs_staff_check,
+                                         InstToolsForm = InstToolsForm)
+
+### User administration pages
 
 @app.route('/register', methods=['POST', 'GET'])
 def register_page():
@@ -799,57 +774,3 @@ def logout_page():
     logout_user()
     flash("You have been logged out!", category='info')
     return redirect(url_for("home_page"))
-
-
-
-# def LookupByGIDorEmail():
-#     ADS_SCOPE_SUBTREE = 2
-#     # William Middleton - no idea who wrote the original code here, sorry.  This is optimized so only one sub is needed.
-#     # Lookup some relevant user data and paste into excel based on either gid or email
-#     # version 1.2 released 29.07.21
-#     # v1.1 - support lookups based on Siemens GID when it is different from current sAMAccountName
-#     # v1.2 - place a NOT FOUND message in the users First Name, when nothing turns up
-#     # setup the desired fields
-#     Fields = 'sAMAccountName,otherPager,c,Manager,siemens-costLocationUnit,siemens-costLocation,mobile,physicalDeliveryOfficeName,msDS-PhoneticFirstName,sn,Title,Department,siemens-gid,mail'
-#     query1 = 'SELECT ' + Fields + ' ' + 'FROM \'LDAP://ad101.siemens-energy.net:3268/DC=ad101,DC=siemens-energy,DC=net\' WHERE '
-#     # Rows.count is typically 600
-#     for i in vbForRange(3, ActiveSheet.UsedRange.Rows.Count):
-#         # determine if the user has provided gid or email
-#         mycell = Cells(i, 'A')
-#         if mycell.Value == '':
-#             mycell = Cells(i, 'B')
-#             if mycell.Value == '':
-#                 MsgBox('Finished with ' + i - 3 + ' users ')
-#                 # Do some cleanup
-#                 conn.Close()
-#                 rs = None
-#                 conn = None
-#                 return
-#             Selector = 'sAMAccountName=\'' + mycell.Value + '\' OR siemens-gid=\'' + mycell.Value + '\''
-#         else:
-#             Selector = 'mail=\'' + mycell.Value + '\''
-#         # setup connection and command
-#         conn = CreateObject('ADODB.Connection')
-#         conn.Provider = 'ADSDSOObject'
-#         conn.Open('ADs Provider')
-#         cmd = CreateObject('ADODB.Command')
-#         cmd.ActiveConnection = conn
-#         q2 = query1 + Selector
-#         cmd.CommandText = q2
-#         cmd.Properties['SearchScope'] = ADS_SCOPE_SUBTREE
-#         cmd.Properties['Cache Results'] = True
-#         #   ActiveSheet.Range(Cells(i, 0), Cells(i, 13)).Clear
-#         for j in vbForRange(2, 13):
-#             Cells(i, j + 1).Clear()
-#         Cells[i, 'C'].Value = 'NOT FOUND'
-#         # execute query and clear release the cmd object
-#         rs = cmd.Execute
-#         cmd = None
-#         # VB2PY (UntranslatedCode) On Error Resume Next
-#         # Fill in the relevant fields for the user
-#         rs.MoveFirst()
-#         while not (( rs.EOF or rs.BOF )):
-#             for j in vbForRange(0, 13):
-#                 field = rs.Fields(j)
-#                 Cells[i, j + 1].Value = field
-#             rs.MoveNext()

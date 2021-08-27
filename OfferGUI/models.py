@@ -30,7 +30,9 @@ class static_costs_commissioning_tools(db.Model):
 class static_costs_installation_tools(db.Model):
     __bind_key__ = 'local'
     id          = db.Column(db.Integer(), primary_key=True)
-    service     = db.Column(db.String())
+    tool        = db.Column(db.String())
+    price_rc    = db.Column(db.String())
+    price_de    = db.Column(db.String())
 
 class static_costs_site_equipment(db.Model):
     __bind_key__ = 'local'
@@ -41,9 +43,8 @@ class static_costs_staff(db.Model):
     __bind_key__ = 'local'
     id                      = db.Column(db.Integer(), primary_key=True)
     service                 = db.Column(db.String())
-    price_reg_inquiry_RC    = db.Column(db.String())
-    price_reg_inquiry_OE    = db.Column(db.String())
-    price_reg_inquiry_RC_DE = db.Column(db.String())
+    price_rc    = db.Column(db.String())
+    price_de    = db.Column(db.String())
 
 class static_costs_testing_tools(db.Model):
     __bind_key__ = 'local'
@@ -146,8 +147,8 @@ class temp_project_info(db.Model):
     mpd_planner_workdays          = db.Column(db.String())
     mpd_worktime_daily            = db.Column(db.String())
     mpd_worktime_weekly           = db.Column(db.String())
-    def __repr__(self):
-        return f'project_info {self.name}'   
+    # def __repr__(self):
+    #     return f'project_info {self.calc_for}'   
 
 class temp_staff(db.Model):
     __bind_key__ = 'local'

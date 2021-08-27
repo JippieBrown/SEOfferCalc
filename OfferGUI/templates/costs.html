@@ -21,32 +21,50 @@ Costs
 
     }
 </style>
-
+<!-- Project info bar -->
 <table class="table table-hover table-dark" >
     <thead>
         <tr style="height: 65px;">
-            {% for item in project_info_items %}
-            <th scope="col">Active Project: {{ item.project_name }}</th>
-            <th scope="col">GIS: {{ item.plant_type }} with {{ item.number_of_bays }} bays and {{ item.busbar }}-Busbar</th>
-            <th scope="col">Calculation for: {{ item.calc_for }}</th>
-            <th scope="col">Editor: {{ item.editor }}</th>
-            {% endfor %}
+            <th scope="col">Active Project: {{ project_info.project_name }}</th>
+            <th scope="col">GIS: {{ project_info.plant_type }} with {{ project_info.number_of_bays }} bays and {{ project_info.busbar }}-Busbar</th>
+            <th scope="col">Calculation for: {{ project_info.calc_for }}</th>
+            <th scope="col">Editor: {{ project_info.editor }}</th>
         </tr>
     </thead>
 </table>
 <br>
-
+<!-- Staff -->
 <div class="workframe">
-    <h3>
-        <img class="icon" src="/static/img/euro.png" width="4%"> &nbsp; Staff</h3>
+    <h3><img class="icon" src="/static/img/euro.png" width="4%"> &nbsp; Staff</h3>
     <table class="table table-hover table-dark">
-        <th>ID</th>
         <th>Staff</th>
-        <th>Rental units</th>
+        <th>Sum of workdays</th>
+        <th>Price per day</th>
+        <th>Total</th>
         <tr>{% for item in costs_staff %}
-            <td></td>
             <td>{{ item.staff }}</td>
             <td>{{ item.workdays }}</td>
+            <td>{{ item.price_per_day }}</td>
+            <td>{{ item.total }}</td>
+        </tr>{% endfor %}
+    </table>
+</div>
+
+<!-- Installation tools -->
+<div class="workframe">
+    <h3><img class="icon" src="/static/img/euro.png" width="4%"> &nbsp; Installation tools</h3>
+    <table class="table table-hover table-dark">
+        <th>ID</th>
+        <th>{{ InstToolsForm.tool(class="form-control") }}</th>
+        <th><button type="input" style="width:38px;font-weight: bold" name="InstallToolPlusBtn"
+            title="add installation tool" value="InstallToolPlusBtn"
+            class="btn btn-outline-success">+</button></th>
+        <th>Total</th>
+        <tr>{% for item in costs_staff %}
+            <td>{{ item.staff }}</td>
+            <td>{{ item.workdays }}</td>
+            <td>{{ item.price_per_day }}</td>
+            <td>{{ item.total }}</td>
         </tr>{% endfor %}
     </table>
 </div>
